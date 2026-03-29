@@ -11,18 +11,55 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { CATEGORY_LABELS, CATEGORY_ICONS, JobCategory } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 
-const categories: JobCategory[] = ['repair', 'plumbing', 'electrical', 'painting', 'construction', 'delivery', 'cleaning', 'freelance', 'other'];
+type DbJobCategory = Database['public']['Enums']['job_category'];
+const categories: DbJobCategory[] = ['repair', 'plumbing', 'electrical', 'painting', 'construction', 'delivery', 'cleaning', 'freelance'];
 
 export default function PostJob() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isInstant, setIsInstant] = useState(false);
+  const [isNegotiable, setIsNegotiable] = useState(true);
+  const [category, setCategory] = useState<DbJobCategory | ''>('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [budget, setBudget] = useState('');
+  const [locationName, setLocationName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({ title: 'Job posted!', description: 'Workers nearby will be notified.' });
-    navigate('/customer');
+    if (!user || !category) return;
+
+    setIsSubmitting(true);
+    try {
+      const budgetVal = parseInt(budget) || 0;
+      const { error } = await supabase.from('jobs').insert({
+        customer_id: user.id,
+        title,
+        description,
+        category: category as DbJobCategory,
+        budget_min: budgetVal,
+        budget_max: budgetVal,
+        is_negotiable: isNegotiable,
+        is_instant: isInstant,
+        location_name: locationName || 'Anna Nagar, Chennai',
+        latitude: 13.0827,
+        longitude: 80.2707,
+      });
+
+      if (error) throw error;
+      toast({ title: 'Job posted!', description: 'Workers nearby will be notified.' });
+      navigate('/customer');
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -37,7 +74,7 @@ export default function PostJob() {
       >
         <div className="space-y-2">
           <Label className="font-bold">Category</Label>
-          <Select>
+          <Select value={category} onValueChange={(v) => setCategory(v as DbJobCategory)}>
             <SelectTrigger className="h-12 rounded-xl">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
@@ -53,29 +90,26 @@ export default function PostJob() {
 
         <div className="space-y-2">
           <Label className="font-bold">Job Title</Label>
-          <Input placeholder="e.g. Fix leaking tap" className="h-12 rounded-xl" />
+          <Input placeholder="e.g. Fix leaking tap" className="h-12 rounded-xl" value={title} onChange={(e) => setTitle(e.target.value)} required />
         </div>
 
         <div className="space-y-2">
           <Label className="font-bold">Description</Label>
-          <Textarea placeholder="Describe the work in detail..." className="min-h-[100px] rounded-xl" />
+          <Textarea placeholder="Describe the work in detail..." className="min-h-[100px] rounded-xl" value={description} onChange={(e) => setDescription(e.target.value)} required />
         </div>
 
         <div className="space-y-2">
           <Label className="font-bold">Budget (₹)</Label>
-          <Input type="number" placeholder="500" className="h-12 rounded-xl" />
+          <Input type="number" placeholder="500" className="h-12 rounded-xl" value={budget} onChange={(e) => setBudget(e.target.value)} required />
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Switch id="negotiable" />
+            <Switch id="negotiable" checked={isNegotiable} onCheckedChange={setIsNegotiable} />
             <label htmlFor="negotiable">Budget is negotiable</label>
           </div>
         </div>
 
         <div className="space-y-2">
           <Label className="font-bold">Location</Label>
-          <Button type="button" variant="outline" className="w-full h-12 rounded-xl gap-2 justify-start text-muted-foreground">
-            <MapPin className="h-4 w-4 text-primary" />
-            Use current location
-          </Button>
+          <Input placeholder="e.g. Anna Nagar, Chennai" className="h-12 rounded-xl" value={locationName} onChange={(e) => setLocationName(e.target.value)} />
         </div>
 
         <div className="space-y-2">
@@ -94,8 +128,8 @@ export default function PostJob() {
           <Switch checked={isInstant} onCheckedChange={setIsInstant} />
         </div>
 
-        <Button type="submit" size="lg" className="w-full h-14 text-base font-bold rounded-2xl">
-          Post Job
+        <Button type="submit" size="lg" className="w-full h-14 text-base font-bold rounded-2xl" disabled={isSubmitting || !category}>
+          {isSubmitting ? 'Posting...' : 'Post Job'}
         </Button>
       </motion.form>
     </div>

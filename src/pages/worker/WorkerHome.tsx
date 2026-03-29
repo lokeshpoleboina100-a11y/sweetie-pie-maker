@@ -1,20 +1,37 @@
-import { useState } from 'react';
-import { MapPin, SlidersHorizontal } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { MapPin, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
 import JobCard from '@/components/JobCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { mockJobs } from '@/lib/mock-data';
 import { CATEGORY_ICONS, CATEGORY_LABELS, JobCategory } from '@/lib/types';
+import { supabase } from '@/integrations/supabase/client';
+import type { Tables } from '@/integrations/supabase/types';
 
+type DbJob = Tables<'jobs'>;
 const categories: JobCategory[] = ['repair', 'plumbing', 'electrical', 'painting', 'construction', 'delivery', 'cleaning', 'freelance'];
 
 export default function WorkerHome() {
   const [selectedCategory, setSelectedCategory] = useState<JobCategory | null>(null);
-  const sortedJobs = [...mockJobs].sort((a, b) => (a.distance ?? 99) - (b.distance ?? 99));
-  const filteredJobs = selectedCategory ? sortedJobs.filter((j) => j.category === selectedCategory) : sortedJobs;
+  const [jobs, setJobs] = useState<DbJob[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      const { data } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false });
+      setJobs(data || []);
+      setLoading(false);
+    };
+    fetchJobs();
+  }, []);
+
+  const filteredJobs = selectedCategory ? jobs.filter((j) => j.category === selectedCategory) : jobs;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -57,18 +74,29 @@ export default function WorkerHome() {
 
         <p className="text-sm text-muted-foreground mb-3">{filteredJobs.length} jobs found nearby</p>
 
-        <div className="space-y-3">
-          {filteredJobs.map((job, i) => (
-            <motion.div
-              key={job.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-            >
-              <JobCard job={job} viewAs="worker" />
-            </motion.div>
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : filteredJobs.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <p className="text-lg font-semibold mb-1">No jobs nearby</p>
+            <p className="text-sm">Check back later for new opportunities!</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredJobs.map((job, i) => (
+              <motion.div
+                key={job.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <JobCard job={job} viewAs="worker" />
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
       <BottomNav role="worker" />
