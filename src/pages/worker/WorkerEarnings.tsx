@@ -2,23 +2,18 @@ import { TrendingUp, Briefcase, Star, IndianRupee } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
 import { Card } from '@/components/ui/card';
-import { mockWorker } from '@/lib/mock-data';
-
-const stats = [
-  { icon: IndianRupee, label: 'Total Earnings', value: `₹${mockWorker.earnings.toLocaleString('en-IN')}`, color: 'text-primary' },
-  { icon: Briefcase, label: 'Jobs Completed', value: mockWorker.completedJobs, color: 'text-accent' },
-  { icon: Star, label: 'Rating', value: mockWorker.rating, color: 'text-warning' },
-  { icon: TrendingUp, label: 'This Month', value: '₹24,500', color: 'text-primary' },
-];
-
-const recentPayments = [
-  { job: 'Kitchen tap repair', amount: 450, date: 'Today' },
-  { job: 'AC gas refill', amount: 1200, date: 'Yesterday' },
-  { job: 'Bathroom plumbing', amount: 800, date: '26 Mar' },
-  { job: 'Water tank repair', amount: 650, date: '25 Mar' },
-];
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function WorkerEarnings() {
+  const { profile } = useAuth();
+
+  const stats = [
+    { icon: IndianRupee, label: 'Total Earnings', value: '₹0', color: 'text-primary' },
+    { icon: Briefcase, label: 'Jobs Completed', value: profile?.total_jobs_completed || 0, color: 'text-accent' },
+    { icon: Star, label: 'Rating', value: profile?.rating || 0, color: 'text-warning' },
+    { icon: TrendingUp, label: 'This Month', value: '₹0', color: 'text-primary' },
+  ];
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <AppHeader title="Earnings" />
@@ -34,17 +29,7 @@ export default function WorkerEarnings() {
         </div>
 
         <h3 className="font-bold text-base mb-3">Recent Payments</h3>
-        <div className="space-y-2">
-          {recentPayments.map((p, i) => (
-            <Card key={i} className="flex items-center justify-between p-4">
-              <div>
-                <p className="font-semibold text-sm">{p.job}</p>
-                <p className="text-xs text-muted-foreground">{p.date}</p>
-              </div>
-              <span className="font-extrabold text-accent">+₹{p.amount}</span>
-            </Card>
-          ))}
-        </div>
+        <p className="text-center text-muted-foreground py-8 text-sm">No payments yet</p>
       </div>
       <BottomNav role="worker" />
     </div>
