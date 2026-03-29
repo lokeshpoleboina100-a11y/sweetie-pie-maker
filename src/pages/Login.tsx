@@ -3,25 +3,44 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { ArrowLeft, Phone } from 'lucide-react';
-import { UserRole } from '@/lib/types';
+import { ArrowLeft, LogIn, UserPlus } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Login() {
   const [searchParams] = useSearchParams();
-  const role = (searchParams.get('role') || 'customer') as UserRole;
+  const role = (searchParams.get('role') || 'customer') as 'customer' | 'worker';
   const navigate = useNavigate();
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
+  const { signIn, signUp } = useAuth();
+  const { toast } = useToast();
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendOtp = () => {
-    if (phone.length >= 10) setStep('otp');
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  const handleVerifyOtp = () => {
-    if (otp.length === 4) {
+    try {
+      if (mode === 'signup') {
+        const { error } = await signUp(email, password, role, fullName);
+        if (error) {
+          toast({ title: 'Sign up failed', description: error.message, variant: 'destructive' });
+          return;
+        }
+        toast({ title: 'Account created!', description: 'You are now logged in.' });
+      } else {
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast({ title: 'Login failed', description: error.message, variant: 'destructive' });
+          return;
+        }
+      }
       navigate(role === 'customer' ? '/customer' : '/worker');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -31,73 +50,77 @@ export default function Login() {
         <ArrowLeft className="h-5 w-5" />
       </Button>
 
-      <motion.div
-        key={step}
+      <motion.form
+        key={mode}
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3 }}
         className="flex-1"
+        onSubmit={handleSubmit}
       >
-        {step === 'phone' ? (
-          <>
-            <h1 className="text-2xl font-extrabold mb-2">Enter your phone number</h1>
-            <p className="text-muted-foreground mb-8">We'll send you a verification code</p>
-            <div className="flex items-center gap-2 mb-6">
-              <div className="flex items-center gap-2 h-14 px-4 rounded-2xl bg-secondary text-foreground font-bold text-lg shrink-0">
-                🇮🇳 +91
-              </div>
-              <Input
-                type="tel"
-                placeholder="98765 43210"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                className="h-14 text-lg font-semibold rounded-2xl"
-                autoFocus
-              />
-            </div>
-            <Button
-              size="lg"
-              className="w-full h-14 text-base font-bold rounded-2xl"
-              disabled={phone.length < 10}
-              onClick={handleSendOtp}
-            >
-              <Phone className="h-5 w-5 mr-2" />
-              Send OTP
-            </Button>
-          </>
-        ) : (
-          <>
-            <h1 className="text-2xl font-extrabold mb-2">Verify OTP</h1>
-            <p className="text-muted-foreground mb-8">
-              Code sent to +91 {phone.slice(0, 5)} {phone.slice(5)}
-            </p>
-            <div className="flex justify-center mb-8">
-              <InputOTP maxLength={4} value={otp} onChange={setOtp}>
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} className="h-16 w-16 text-2xl font-bold rounded-xl" />
-                  <InputOTPSlot index={1} className="h-16 w-16 text-2xl font-bold rounded-xl" />
-                  <InputOTPSlot index={2} className="h-16 w-16 text-2xl font-bold rounded-xl" />
-                  <InputOTPSlot index={3} className="h-16 w-16 text-2xl font-bold rounded-xl" />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
-            <Button
-              size="lg"
-              className="w-full h-14 text-base font-bold rounded-2xl"
-              disabled={otp.length < 4}
-              onClick={handleVerifyOtp}
-            >
-              Verify & Continue
-            </Button>
-            <button
-              className="w-full text-center text-sm text-primary font-semibold mt-4"
-              onClick={() => setStep('phone')}
-            >
-              Change phone number
-            </button>
-          </>
-        )}
-      </motion.div>
+        <h1 className="text-2xl font-extrabold mb-2">
+          {mode === 'login' ? 'Welcome back!' : 'Create your account'}
+        </h1>
+        <p className="text-muted-foreground mb-8">
+          {mode === 'login'
+            ? `Sign in as a ${role}`
+            : `Sign up as a ${role}`}
+        </p>
+
+        <div className="space-y-4 mb-6">
+          {mode === 'signup' && (
+            <Input
+              placeholder="Full name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="h-14 text-lg rounded-2xl"
+              required
+              autoFocus
+            />
+          )}
+          <Input
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="h-14 text-lg rounded-2xl"
+            required
+            autoFocus={mode === 'login'}
+          />
+          <Input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="h-14 text-lg rounded-2xl"
+            required
+            minLength={6}
+          />
+        </div>
+
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full h-14 text-base font-bold rounded-2xl"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            'Please wait...'
+          ) : mode === 'login' ? (
+            <><LogIn className="h-5 w-5 mr-2" /> Sign In</>
+          ) : (
+            <><UserPlus className="h-5 w-5 mr-2" /> Sign Up</>
+          )}
+        </Button>
+
+        <button
+          type="button"
+          className="w-full text-center text-sm text-primary font-semibold mt-4"
+          onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+        >
+          {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+        </button>
+      </motion.form>
     </div>
   );
 }
