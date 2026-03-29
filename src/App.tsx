@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import CustomerHome from "./pages/customer/CustomerHome";
@@ -20,33 +21,46 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { session, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  if (!session) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
+const AppRoutes = () => (
+  <Routes>
+    <Route path="/" element={<Landing />} />
+    <Route path="/login" element={<Login />} />
+    
+    {/* Customer Routes */}
+    <Route path="/customer" element={<ProtectedRoute><CustomerHome /></ProtectedRoute>} />
+    <Route path="/customer/post-job" element={<ProtectedRoute><PostJob /></ProtectedRoute>} />
+    <Route path="/customer/job/:id" element={<ProtectedRoute><JobDetails /></ProtectedRoute>} />
+    <Route path="/customer/chats" element={<ProtectedRoute><CustomerChats /></ProtectedRoute>} />
+    <Route path="/customer/chat/:id" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+    <Route path="/customer/profile" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
+    
+    {/* Worker Routes */}
+    <Route path="/worker" element={<ProtectedRoute><WorkerHome /></ProtectedRoute>} />
+    <Route path="/worker/job/:id" element={<ProtectedRoute><WorkerJobDetails /></ProtectedRoute>} />
+    <Route path="/worker/my-jobs" element={<ProtectedRoute><WorkerMyJobs /></ProtectedRoute>} />
+    <Route path="/worker/earnings" element={<ProtectedRoute><WorkerEarnings /></ProtectedRoute>} />
+    <Route path="/worker/profile" element={<ProtectedRoute><WorkerProfile /></ProtectedRoute>} />
+    
+    <Route path="*" element={<NotFound />} />
+  </Routes>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          
-          {/* Customer Routes */}
-          <Route path="/customer" element={<CustomerHome />} />
-          <Route path="/customer/post-job" element={<PostJob />} />
-          <Route path="/customer/job/:id" element={<JobDetails />} />
-          <Route path="/customer/chats" element={<CustomerChats />} />
-          <Route path="/customer/chat/:id" element={<Chat />} />
-          <Route path="/customer/profile" element={<CustomerProfile />} />
-          
-          {/* Worker Routes */}
-          <Route path="/worker" element={<WorkerHome />} />
-          <Route path="/worker/job/:id" element={<WorkerJobDetails />} />
-          <Route path="/worker/my-jobs" element={<WorkerMyJobs />} />
-          <Route path="/worker/earnings" element={<WorkerEarnings />} />
-          <Route path="/worker/profile" element={<WorkerProfile />} />
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
