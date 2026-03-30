@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Star, MessageSquare, CheckCircle, MapPin, Loader2 } from 'lucide-react';
+import { Star, MessageSquare, CheckCircle, MapPin, Loader2, IndianRupee } from 'lucide-react';
 import { motion } from 'framer-motion';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
