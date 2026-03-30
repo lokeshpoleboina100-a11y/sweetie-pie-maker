@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import CustomerHome from "./pages/customer/CustomerHome";
 import PostJob from "./pages/customer/PostJob";
 import JobDetails from "./pages/customer/JobDetails";
+import Payment from "./pages/customer/Payment";
 import Chat from "./pages/customer/Chat";
 import CustomerChats from "./pages/customer/CustomerChats";
 import CustomerProfile from "./pages/customer/CustomerProfile";
