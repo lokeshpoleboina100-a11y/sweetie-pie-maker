@@ -156,6 +156,56 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          commission: number
+          created_at: string
+          customer_id: string
+          id: string
+          job_id: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+          upi_transaction_id: string | null
+          worker_id: string
+        }
+        Insert: {
+          amount: number
+          commission?: number
+          created_at?: string
+          customer_id: string
+          id?: string
+          job_id: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+          upi_transaction_id?: string | null
+          worker_id: string
+        }
+        Update: {
+          amount?: number
+          commission?: number
+          created_at?: string
+          customer_id?: string
+          id?: string
+          job_id?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+          upi_transaction_id?: string | null
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -279,6 +329,8 @@ export type Database = {
         | "cleaning"
         | "freelance"
       job_status: "open" | "in_progress" | "completed" | "cancelled"
+      payment_method: "upi" | "cash" | "wallet"
+      payment_status: "pending" | "completed" | "failed" | "refunded"
       user_role: "customer" | "worker"
     }
     CompositeTypes: {
@@ -419,6 +471,8 @@ export const Constants = {
         "freelance",
       ],
       job_status: ["open", "in_progress", "completed", "cancelled"],
+      payment_method: ["upi", "cash", "wallet"],
+      payment_status: ["pending", "completed", "failed", "refunded"],
       user_role: ["customer", "worker"],
     },
   },

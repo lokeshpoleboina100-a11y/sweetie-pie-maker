@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import CustomerHome from "./pages/customer/CustomerHome";
 import PostJob from "./pages/customer/PostJob";
 import JobDetails from "./pages/customer/JobDetails";
+import Payment from "./pages/customer/Payment";
 import Chat from "./pages/customer/Chat";
 import CustomerChats from "./pages/customer/CustomerChats";
 import CustomerProfile from "./pages/customer/CustomerProfile";
@@ -37,6 +38,7 @@ const AppRoutes = () => (
     <Route path="/customer" element={<ProtectedRoute><CustomerHome /></ProtectedRoute>} />
     <Route path="/customer/post-job" element={<ProtectedRoute><PostJob /></ProtectedRoute>} />
     <Route path="/customer/job/:id" element={<ProtectedRoute><JobDetails /></ProtectedRoute>} />
+    <Route path="/customer/payment/:id" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
     <Route path="/customer/chats" element={<ProtectedRoute><CustomerChats /></ProtectedRoute>} />
     <Route path="/customer/chat/:id" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
     <Route path="/customer/profile" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />

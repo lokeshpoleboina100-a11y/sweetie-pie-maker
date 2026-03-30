@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Star, MessageSquare, CheckCircle, MapPin, Loader2 } from 'lucide-react';
+import { Star, MessageSquare, CheckCircle, MapPin, Loader2, IndianRupee } from 'lucide-react';
 import { motion } from 'framer-motion';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
@@ -124,6 +124,15 @@ export default function JobDetails() {
             </span>
           </div>
         </Card>
+
+        {(job.status === 'in_progress' || job.status === 'completed') && job.accepted_worker_id && (
+          <Button
+            className="w-full h-12 rounded-xl font-bold text-base gap-2"
+            onClick={() => navigate(`/customer/payment/${job.id}`)}
+          >
+            <IndianRupee className="h-5 w-5" /> Pay Worker
+          </Button>
+        )}
 
         <h3 className="font-bold text-base">{bids.length} Bids</h3>
 
