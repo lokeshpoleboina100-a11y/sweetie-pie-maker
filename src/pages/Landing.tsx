@@ -2,9 +2,11 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Briefcase, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background">
@@ -17,8 +19,8 @@ export default function Landing() {
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary mb-6">
           <span className="text-4xl">🔨</span>
         </div>
-        <h1 className="text-3xl font-extrabold tracking-tight mb-2">NearWork</h1>
-        <p className="text-muted-foreground text-base">Find jobs & workers near you</p>
+        <h1 className="text-3xl font-extrabold tracking-tight mb-2">{t('app_name')}</h1>
+        <p className="text-muted-foreground text-base">{t('landing.tagline')}</p>
       </motion.div>
 
       <motion.div
@@ -33,7 +35,7 @@ export default function Landing() {
           onClick={() => navigate('/login?role=customer')}
         >
           <User className="h-6 w-6" />
-          I need work done
+          {t('landing.need_work')}
         </Button>
         <Button
           size="lg"
@@ -42,12 +44,12 @@ export default function Landing() {
           onClick={() => navigate('/login?role=worker')}
         >
           <Briefcase className="h-6 w-6" />
-          I'm looking for work
+          {t('landing.find_work')}
         </Button>
       </motion.div>
 
       <p className="text-xs text-muted-foreground mt-10">
-        By continuing you agree to our Terms & Privacy Policy
+        {t('landing.terms')}
       </p>
     </div>
   );

@@ -2,30 +2,32 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, Search, MessageSquare, User, Plus, Briefcase, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserRole } from '@/lib/types';
+import { useTranslation } from 'react-i18next';
 
 interface NavItem {
   icon: React.ElementType;
-  label: string;
+  labelKey: string;
   path: string;
 }
 
 const customerNav: NavItem[] = [
-  { icon: Home, label: 'Home', path: '/customer' },
-  { icon: Plus, label: 'Post Job', path: '/customer/post-job' },
-  { icon: MessageSquare, label: 'Chat', path: '/customer/chats' },
-  { icon: User, label: 'Profile', path: '/customer/profile' },
+  { icon: Home, labelKey: 'nav.home', path: '/customer' },
+  { icon: Plus, labelKey: 'nav.post_job', path: '/customer/post-job' },
+  { icon: MessageSquare, labelKey: 'nav.chat', path: '/customer/chats' },
+  { icon: User, labelKey: 'nav.profile', path: '/customer/profile' },
 ];
 
 const workerNav: NavItem[] = [
-  { icon: Search, label: 'Jobs', path: '/worker' },
-  { icon: Briefcase, label: 'My Jobs', path: '/worker/my-jobs' },
-  { icon: Wallet, label: 'Earnings', path: '/worker/earnings' },
-  { icon: User, label: 'Profile', path: '/worker/profile' },
+  { icon: Search, labelKey: 'nav.jobs', path: '/worker' },
+  { icon: Briefcase, labelKey: 'nav.my_jobs', path: '/worker/my-jobs' },
+  { icon: Wallet, labelKey: 'nav.earnings', path: '/worker/earnings' },
+  { icon: User, labelKey: 'nav.profile', path: '/worker/profile' },
 ];
 
 export default function BottomNav({ role }: { role: UserRole }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const items = role === 'customer' ? customerNav : workerNav;
 
   return (
@@ -45,7 +47,7 @@ export default function BottomNav({ role }: { role: UserRole }) {
               )}
             >
               <item.icon className={cn('h-6 w-6', isActive && 'stroke-[2.5]')} />
-              <span className="text-[10px] font-semibold">{item.label}</span>
+              <span className="text-[10px] font-semibold">{t(item.labelKey)}</span>
             </button>
           );
         })}
