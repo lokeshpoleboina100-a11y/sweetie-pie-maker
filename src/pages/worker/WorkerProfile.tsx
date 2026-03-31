@@ -7,11 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { CATEGORY_LABELS } from '@/lib/types';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function WorkerProfile() {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSignOut = async () => {
     await signOut();
@@ -20,7 +22,7 @@ export default function WorkerProfile() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <AppHeader title="Profile" />
+      <AppHeader title={t('profile.title')} />
 
       <div className="max-w-lg mx-auto px-4 py-6">
         <div className="flex items-center gap-4 mb-6">
@@ -34,18 +36,18 @@ export default function WorkerProfile() {
               <h2 className="text-xl font-extrabold">{profile?.full_name || 'Worker'}</h2>
               {profile?.is_verified && (
                 <Badge className="bg-green-100 text-green-700 gap-1">
-                  <Shield className="h-3 w-3" /> Verified
+                  <Shield className="h-3 w-3" /> {t('profile.verified')}
                 </Badge>
               )}
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
               <Star className="h-4 w-4 fill-warning text-warning" />
               <span className="font-semibold">{profile?.rating || 0}</span>
-              <span>({profile?.total_reviews || 0} reviews)</span>
+              <span>({t('profile.reviews', { count: profile?.total_reviews || 0 })})</span>
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
               <MapPin className="h-3.5 w-3.5" />
-              <span>{profile?.location_name || 'Location not set'}</span>
+              <span>{profile?.location_name || t('profile.location_not_set')}</span>
             </div>
           </div>
         </div>
@@ -53,7 +55,7 @@ export default function WorkerProfile() {
         {profile?.skills && profile.skills.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
             {profile.skills.map((skill) => (
-              <Badge key={skill} variant="secondary">{CATEGORY_LABELS[skill as keyof typeof CATEGORY_LABELS] || skill}</Badge>
+              <Badge key={skill} variant="secondary">{t(`categories.${skill}`, { defaultValue: skill })}</Badge>
             ))}
           </div>
         )}
@@ -61,23 +63,27 @@ export default function WorkerProfile() {
         <div className="grid grid-cols-3 gap-3 mb-6">
           <Card className="p-3 text-center">
             <p className="text-2xl font-extrabold text-primary">{profile?.total_jobs_completed || 0}</p>
-            <p className="text-xs text-muted-foreground">Jobs Done</p>
+            <p className="text-xs text-muted-foreground">{t('profile.jobs_done')}</p>
           </Card>
           <Card className="p-3 text-center">
             <p className="text-2xl font-extrabold text-primary">{profile?.experience_years || 0}</p>
-            <p className="text-xs text-muted-foreground">Years Exp</p>
+            <p className="text-xs text-muted-foreground">{t('profile.years_exp')}</p>
           </Card>
           <Card className="p-3 text-center">
             <p className="text-2xl font-extrabold text-primary">{profile?.service_radius_km || 10}</p>
-            <p className="text-xs text-muted-foreground">km Radius</p>
+            <p className="text-xs text-muted-foreground">{t('profile.km_radius')}</p>
           </Card>
         </div>
 
+        <Card className="p-4 mb-4">
+          <LanguageSwitcher />
+        </Card>
+
         <div className="space-y-2">
           {[
-            { label: 'Edit Profile', action: () => {} },
-            { label: 'Verification', action: () => {} },
-            { label: 'Settings', action: () => {} },
+            { label: t('profile.edit_profile'), action: () => {} },
+            { label: t('profile.verification'), action: () => {} },
+            { label: t('profile.settings'), action: () => {} },
           ].map((item) => (
             <Card key={item.label} className="p-4 cursor-pointer" onClick={item.action}>
               <div className="flex items-center justify-between">
@@ -89,7 +95,7 @@ export default function WorkerProfile() {
         </div>
 
         <Button variant="outline" className="w-full mt-6 h-12 rounded-xl gap-2 text-destructive border-destructive/20" onClick={handleSignOut}>
-          <LogOut className="h-5 w-5" /> Sign Out
+          <LogOut className="h-5 w-5" /> {t('profile.sign_out')}
         </Button>
       </div>
 

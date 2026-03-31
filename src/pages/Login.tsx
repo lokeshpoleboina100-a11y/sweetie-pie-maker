@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 export default function Login() {
   const [searchParams] = useSearchParams();
@@ -13,6 +14,7 @@ export default function Login() {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,14 +29,14 @@ export default function Login() {
       if (mode === 'signup') {
         const { error } = await signUp(email, password, role, fullName);
         if (error) {
-          toast({ title: 'Sign up failed', description: error.message, variant: 'destructive' });
+          toast({ title: t('login.signup_failed'), description: error.message, variant: 'destructive' });
           return;
         }
-        toast({ title: 'Account created!', description: 'You are now logged in.' });
+        toast({ title: t('login.signup_success'), description: t('login.signup_desc') });
       } else {
         const { error } = await signIn(email, password);
         if (error) {
-          toast({ title: 'Login failed', description: error.message, variant: 'destructive' });
+          toast({ title: t('login.login_failed'), description: error.message, variant: 'destructive' });
           return;
         }
       }
@@ -59,18 +61,18 @@ export default function Login() {
         onSubmit={handleSubmit}
       >
         <h1 className="text-2xl font-extrabold mb-2">
-          {mode === 'login' ? 'Welcome back!' : 'Create your account'}
+          {mode === 'login' ? t('login.welcome_back') : t('login.create_account')}
         </h1>
         <p className="text-muted-foreground mb-8">
           {mode === 'login'
-            ? `Sign in as a ${role}`
-            : `Sign up as a ${role}`}
+            ? t('login.sign_in_as', { role })
+            : t('login.sign_up_as', { role })}
         </p>
 
         <div className="space-y-4 mb-6">
           {mode === 'signup' && (
             <Input
-              placeholder="Full name"
+              placeholder={t('login.full_name')}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className="h-14 text-lg rounded-2xl"
@@ -80,7 +82,7 @@ export default function Login() {
           )}
           <Input
             type="email"
-            placeholder="Email address"
+            placeholder={t('login.email')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="h-14 text-lg rounded-2xl"
@@ -89,7 +91,7 @@ export default function Login() {
           />
           <Input
             type="password"
-            placeholder="Password"
+            placeholder={t('login.password')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="h-14 text-lg rounded-2xl"
@@ -105,11 +107,11 @@ export default function Login() {
           disabled={isLoading}
         >
           {isLoading ? (
-            'Please wait...'
+            t('login.please_wait')
           ) : mode === 'login' ? (
-            <><LogIn className="h-5 w-5 mr-2" /> Sign In</>
+            <><LogIn className="h-5 w-5 mr-2" /> {t('login.sign_in')}</>
           ) : (
-            <><UserPlus className="h-5 w-5 mr-2" /> Sign Up</>
+            <><UserPlus className="h-5 w-5 mr-2" /> {t('login.sign_up')}</>
           )}
         </Button>
 
@@ -118,7 +120,7 @@ export default function Login() {
           className="w-full text-center text-sm text-primary font-semibold mt-4"
           onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
         >
-          {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+          {mode === 'login' ? t('login.no_account') : t('login.has_account')}
         </button>
       </motion.form>
     </div>
