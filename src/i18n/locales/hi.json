@@ -1,0 +1,101 @@
+{
+  "app_name": "NearWork",
+  "landing": {
+    "tagline": "अपने पास नौकरी और कारीगर खोजें",
+    "need_work": "मुझे काम करवाना है",
+    "find_work": "मुझे काम चाहिए",
+    "terms": "जारी रखकर आप हमारी शर्तों और गोपनीयता नीति से सहमत हैं"
+  },
+  "login": {
+    "welcome_back": "वापस स्वागत है!",
+    "create_account": "अपना खाता बनाएं",
+    "sign_in_as": "{{role}} के रूप में साइन इन करें",
+    "sign_up_as": "{{role}} के रूप में साइन अप करें",
+    "full_name": "पूरा नाम",
+    "email": "ईमेल पता",
+    "password": "पासवर्ड",
+    "please_wait": "कृपया प्रतीक्षा करें...",
+    "sign_in": "साइन इन",
+    "sign_up": "साइन अप",
+    "no_account": "खाता नहीं है? साइन अप करें",
+    "has_account": "पहले से खाता है? साइन इन करें",
+    "signup_success": "खाता बनाया गया!",
+    "signup_desc": "आप अब लॉग इन हैं।",
+    "login_failed": "लॉगिन विफल",
+    "signup_failed": "साइन अप विफल"
+  },
+  "nav": {
+    "home": "होम",
+    "post_job": "काम पोस्ट करें",
+    "chat": "चैट",
+    "profile": "प्रोफाइल",
+    "jobs": "काम",
+    "my_jobs": "मेरे काम",
+    "earnings": "कमाई"
+  },
+  "customer_home": {
+    "need_something": "कुछ करवाना है?",
+    "post_desc": "काम पोस्ट करें और पास के कारीगरों से बोली पाएं",
+    "post_job": "काम पोस्ट करें",
+    "all": "सभी",
+    "your_jobs": "आपके पोस्ट किए गए काम",
+    "no_jobs": "अभी कोई काम नहीं",
+    "no_jobs_desc": "शुरू करने के लिए अपना पहला काम पोस्ट करें!"
+  },
+  "worker_home": {
+    "nearby_jobs": "पास के काम",
+    "radius": "{{km}} किमी दायरा",
+    "all": "सभी",
+    "jobs_found": "{{count}} काम पास में मिले",
+    "no_jobs": "पास में कोई काम नहीं",
+    "no_jobs_desc": "नए अवसरों के लिए बाद में देखें!"
+  },
+  "post_job": {
+    "title": "काम पोस्ट करें",
+    "category": "श्रेणी",
+    "select_category": "श्रेणी चुनें",
+    "job_title": "काम का शीर्षक",
+    "job_title_placeholder": "जैसे नल ठीक करें",
+    "description": "विवरण",
+    "description_placeholder": "काम का विस्तार से वर्णन करें...",
+    "budget": "बजट (₹)",
+    "negotiable": "बजट परक्राम्य है",
+    "location": "स्थान",
+    "location_placeholder": "जैसे अन्ना नगर, चेन्नई",
+    "photos": "फोटो (वैकल्पिक)",
+    "add_photos": "फोटो जोड़ें",
+    "instant_job": "⚡ तत्काल काम",
+    "instant_desc": "पहला उपलब्ध कारीगर लेगा",
+    "submit": "काम पोस्ट करें",
+    "submitting": "पोस्ट हो रहा है...",
+    "success": "काम पोस्ट हुआ!",
+    "success_desc": "पास के कारीगरों को सूचित किया जाएगा।"
+  },
+  "profile": {
+    "title": "प्रोफाइल",
+    "edit_profile": "प्रोफाइल संपादित करें",
+    "my_jobs": "मेरे काम",
+    "payment_history": "भुगतान इतिहास",
+    "settings": "सेटिंग्स",
+    "verification": "सत्यापन",
+    "sign_out": "साइन आउट",
+    "language": "भाषा",
+    "reviews": "{{count}} समीक्षाएं",
+    "verified": "सत्यापित",
+    "jobs_done": "काम पूरे",
+    "years_exp": "वर्ष अनुभव",
+    "km_radius": "किमी दायरा",
+    "location_not_set": "स्थान सेट नहीं"
+  },
+  "categories": {
+    "repair": "मरम्मत",
+    "plumbing": "प्लंबिंग",
+    "electrical": "इलेक्ट्रिकल",
+    "painting": "पेंटिंग",
+    "construction": "निर्माण",
+    "delivery": "डिलीवरी",
+    "cleaning": "सफाई",
+    "freelance": "फ्रीलांस",
+    "other": "अन्य"
+  }
+}

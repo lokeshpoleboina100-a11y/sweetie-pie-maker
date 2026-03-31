@@ -1,0 +1,101 @@
+{
+  "app_name": "NearWork",
+  "landing": {
+    "tagline": "Find jobs & workers near you",
+    "need_work": "I need work done",
+    "find_work": "I'm looking for work",
+    "terms": "By continuing you agree to our Terms & Privacy Policy"
+  },
+  "login": {
+    "welcome_back": "Welcome back!",
+    "create_account": "Create your account",
+    "sign_in_as": "Sign in as a {{role}}",
+    "sign_up_as": "Sign up as a {{role}}",
+    "full_name": "Full name",
+    "email": "Email address",
+    "password": "Password",
+    "please_wait": "Please wait...",
+    "sign_in": "Sign In",
+    "sign_up": "Sign Up",
+    "no_account": "Don't have an account? Sign up",
+    "has_account": "Already have an account? Sign in",
+    "signup_success": "Account created!",
+    "signup_desc": "You are now logged in.",
+    "login_failed": "Login failed",
+    "signup_failed": "Sign up failed"
+  },
+  "nav": {
+    "home": "Home",
+    "post_job": "Post Job",
+    "chat": "Chat",
+    "profile": "Profile",
+    "jobs": "Jobs",
+    "my_jobs": "My Jobs",
+    "earnings": "Earnings"
+  },
+  "customer_home": {
+    "need_something": "Need something done?",
+    "post_desc": "Post a job and get bids from nearby workers",
+    "post_job": "Post a Job",
+    "all": "All",
+    "your_jobs": "Your posted jobs",
+    "no_jobs": "No jobs yet",
+    "no_jobs_desc": "Post your first job to get started!"
+  },
+  "worker_home": {
+    "nearby_jobs": "Nearby Jobs",
+    "radius": "{{km}} km radius",
+    "all": "All",
+    "jobs_found": "{{count}} jobs found nearby",
+    "no_jobs": "No jobs nearby",
+    "no_jobs_desc": "Check back later for new opportunities!"
+  },
+  "post_job": {
+    "title": "Post a Job",
+    "category": "Category",
+    "select_category": "Select category",
+    "job_title": "Job Title",
+    "job_title_placeholder": "e.g. Fix leaking tap",
+    "description": "Description",
+    "description_placeholder": "Describe the work in detail...",
+    "budget": "Budget (₹)",
+    "negotiable": "Budget is negotiable",
+    "location": "Location",
+    "location_placeholder": "e.g. Anna Nagar, Chennai",
+    "photos": "Photos (optional)",
+    "add_photos": "Add photos",
+    "instant_job": "⚡ Instant Job",
+    "instant_desc": "First available worker gets it",
+    "submit": "Post Job",
+    "submitting": "Posting...",
+    "success": "Job posted!",
+    "success_desc": "Workers nearby will be notified."
+  },
+  "profile": {
+    "title": "Profile",
+    "edit_profile": "Edit Profile",
+    "my_jobs": "My Jobs",
+    "payment_history": "Payment History",
+    "settings": "Settings",
+    "verification": "Verification",
+    "sign_out": "Sign Out",
+    "language": "Language",
+    "reviews": "{{count}} reviews",
+    "verified": "Verified",
+    "jobs_done": "Jobs Done",
+    "years_exp": "Years Exp",
+    "km_radius": "km Radius",
+    "location_not_set": "Location not set"
+  },
+  "categories": {
+    "repair": "Repair",
+    "plumbing": "Plumbing",
+    "electrical": "Electrical",
+    "painting": "Painting",
+    "construction": "Construction",
+    "delivery": "Delivery",
+    "cleaning": "Cleaning",
+    "freelance": "Freelance",
+    "other": "Other"
+  }
+}
