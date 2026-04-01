@@ -19,6 +19,7 @@ import WorkerJobDetails from "./pages/worker/WorkerJobDetails";
 import WorkerMyJobs from "./pages/worker/WorkerMyJobs";
 import WorkerEarnings from "./pages/worker/WorkerEarnings";
 import WorkerProfile from "./pages/worker/WorkerProfile";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,9 @@ const AppRoutes = () => (
     <Route path="/worker/my-jobs" element={<ProtectedRoute><WorkerMyJobs /></ProtectedRoute>} />
     <Route path="/worker/earnings" element={<ProtectedRoute><WorkerEarnings /></ProtectedRoute>} />
     <Route path="/worker/profile" element={<ProtectedRoute><WorkerProfile /></ProtectedRoute>} />
+    
+    {/* Admin Routes */}
+    <Route path="/admin/*" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
     
     <Route path="*" element={<NotFound />} />
   </Routes>
