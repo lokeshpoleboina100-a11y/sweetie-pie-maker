@@ -26,11 +26,7 @@ export default function WorkerProfile() {
 
       <div className="max-w-lg mx-auto px-4 py-6">
         <div className="flex items-center gap-4 mb-6">
-          <Avatar className="h-20 w-20">
-            <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">
-              {(profile?.full_name || 'W').charAt(0)}
-            </AvatarFallback>
-          </Avatar>
+          <AvatarUpload />
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-extrabold">{profile?.full_name || 'Worker'}</h2>
