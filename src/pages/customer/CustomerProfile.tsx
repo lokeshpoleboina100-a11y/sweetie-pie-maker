@@ -1,13 +1,13 @@
 import { Star, MapPin, LogOut, ChevronRight } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import AvatarUpload from '@/components/AvatarUpload';
 
 export default function CustomerProfile() {
   const { profile, signOut } = useAuth();
