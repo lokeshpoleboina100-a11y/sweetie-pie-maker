@@ -1,6 +1,7 @@
 import { ArrowLeft, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface AppHeaderProps {
   title: string;
@@ -24,6 +25,7 @@ export default function AppHeader({ title, showBack, showNotifications = false, 
           <h1 className="text-lg font-bold truncate">{title}</h1>
         </div>
         <div className="flex items-center gap-1">
+          <ThemeToggle />
           {right}
           {showNotifications && (
             <Button variant="ghost" size="icon" className="h-9 w-9 relative">

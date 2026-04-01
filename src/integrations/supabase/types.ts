@@ -123,26 +123,38 @@ export type Database = {
       }
       messages: {
         Row: {
+          attachment_type: string | null
+          attachment_url: string | null
           created_at: string
           id: string
           is_read: boolean | null
           job_id: string
+          reactions: Json | null
+          reply_to: string | null
           sender_id: string
           text: string
         }
         Insert: {
+          attachment_type?: string | null
+          attachment_url?: string | null
           created_at?: string
           id?: string
           is_read?: boolean | null
           job_id: string
+          reactions?: Json | null
+          reply_to?: string | null
           sender_id: string
           text: string
         }
         Update: {
+          attachment_type?: string | null
+          attachment_url?: string | null
           created_at?: string
           id?: string
           is_read?: boolean | null
           job_id?: string
+          reactions?: Json | null
+          reply_to?: string | null
           sender_id?: string
           text?: string
         }
@@ -152,6 +164,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
         ]
