@@ -19,6 +19,7 @@ import WorkerJobDetails from "./pages/worker/WorkerJobDetails";
 import WorkerMyJobs from "./pages/worker/WorkerMyJobs";
 import WorkerEarnings from "./pages/worker/WorkerEarnings";
 import WorkerProfile from "./pages/worker/WorkerProfile";
+import WorkerSettings from "./pages/worker/WorkerSettings";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
