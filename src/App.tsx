@@ -52,6 +52,7 @@ const AppRoutes = () => (
     <Route path="/worker/my-jobs" element={<ProtectedRoute><WorkerMyJobs /></ProtectedRoute>} />
     <Route path="/worker/earnings" element={<ProtectedRoute><WorkerEarnings /></ProtectedRoute>} />
     <Route path="/worker/profile" element={<ProtectedRoute><WorkerProfile /></ProtectedRoute>} />
+    <Route path="/worker/settings" element={<ProtectedRoute><WorkerSettings /></ProtectedRoute>} />
     
     {/* Admin Routes */}
     <Route path="/admin/*" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />

@@ -433,7 +433,7 @@ export default function WorkerSettings() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <AppHeader title="Settings" showBack onBack={() => navigate('/worker/profile')} />
+      <AppHeader title="Settings" showBack />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row gap-6">
