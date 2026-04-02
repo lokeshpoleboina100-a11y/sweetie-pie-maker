@@ -79,7 +79,7 @@ export default function WorkerProfile() {
           {[
             { label: t('profile.edit_profile'), action: () => {} },
             { label: t('profile.verification'), action: () => {} },
-            { label: t('profile.settings'), action: () => {} },
+            { label: t('profile.settings'), action: () => navigate('/worker/settings') },
           ].map((item) => (
             <Card key={item.label} className="p-4 cursor-pointer" onClick={item.action}>
               <div className="flex items-center justify-between">
