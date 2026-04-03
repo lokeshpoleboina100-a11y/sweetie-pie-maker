@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { locationData } from '@/lib/location-data';
 import AvatarUpload from '@/components/AvatarUpload';
 import AppHeader from '@/components/AppHeader';
+import LocationPicker from '@/components/LocationPicker';
 
 export default function EditProfile() {
   const { profile, user, refreshProfile } = useAuth();
@@ -141,6 +142,22 @@ export default function EditProfile() {
             </Select>
           </div>
         )}
+
+        {/* Map Location Picker */}
+        <div className="space-y-1.5">
+          <Label>{t('edit_profile.map_location', 'Pin Location on Map')}</Label>
+          <LocationPicker
+            latitude={profile?.latitude}
+            longitude={profile?.longitude}
+            locationName={profile?.location_name || ''}
+            onLocationChange={(lat, lng, name) => {
+              // Auto-fill district from map location
+              if (!district) {
+                setDistrict(name.split(',')[0]?.trim() || '');
+              }
+            }}
+          />
+        </div>
 
         <Button onClick={handleSave} disabled={saving} className="w-full h-12 rounded-xl font-bold gap-2">
           <Save className="h-5 w-5" />

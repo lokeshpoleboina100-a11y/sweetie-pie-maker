@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { NotificationProvider } from "@/components/NotificationProvider";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import CustomerHome from "./pages/customer/CustomerHome";
@@ -23,6 +24,7 @@ import WorkerSettings from "./pages/worker/WorkerSettings";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import EditProfile from "./pages/EditProfile";
 import AIHelpDesk from "./pages/AIHelpDesk";
+import PhoneLogin from "./pages/PhoneLogin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +40,7 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Landing />} />
     <Route path="/login" element={<Login />} />
+    <Route path="/phone-login" element={<PhoneLogin />} />
     
     {/* Customer Routes */}
     <Route path="/customer" element={<ProtectedRoute><CustomerHome /></ProtectedRoute>} />
@@ -75,7 +78,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <AppRoutes />
+            <NotificationProvider>
+              <AppRoutes />
+            </NotificationProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

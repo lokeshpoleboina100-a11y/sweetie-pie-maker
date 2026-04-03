@@ -168,6 +168,14 @@ export default function Login() {
         >
           {mode === 'login' ? t('login.no_account') : t('login.has_account')}
         </button>
+
+        <button
+          type="button"
+          className="w-full text-center text-sm text-muted-foreground font-medium mt-2"
+          onClick={() => navigate(`/phone-login?role=${role}`)}
+        >
+          {t('phone_login.use_phone', 'Login with Phone Number')}
+        </button>
       </motion.form>
     </div>
   );

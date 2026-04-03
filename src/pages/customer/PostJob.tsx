@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera } from 'lucide-react';
 import { motion } from 'framer-motion';
+import LocationPicker from '@/components/LocationPicker';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +33,8 @@ export default function PostJob() {
   const [budget, setBudget] = useState('');
   const [locationName, setLocationName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [jobLat, setJobLat] = useState<number>(13.0827);
+  const [jobLng, setJobLng] = useState<number>(80.2707);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,9 +52,9 @@ export default function PostJob() {
         budget_max: budgetVal,
         is_negotiable: isNegotiable,
         is_instant: isInstant,
-        location_name: locationName || 'Anna Nagar, Chennai',
-        latitude: 13.0827,
-        longitude: 80.2707,
+        location_name: locationName || 'Not set',
+        latitude: jobLat,
+        longitude: jobLng,
       });
 
       if (error) throw error;
@@ -111,7 +114,16 @@ export default function PostJob() {
 
         <div className="space-y-2">
           <Label className="font-bold">{t('post_job.location')}</Label>
-          <Input placeholder={t('post_job.location_placeholder')} className="h-12 rounded-xl" value={locationName} onChange={(e) => setLocationName(e.target.value)} />
+          <LocationPicker
+            latitude={jobLat}
+            longitude={jobLng}
+            locationName={locationName}
+            onLocationChange={(lat, lng, name) => {
+              setJobLat(lat);
+              setJobLng(lng);
+              setLocationName(name);
+            }}
+          />
         </div>
 
         <div className="space-y-2">
