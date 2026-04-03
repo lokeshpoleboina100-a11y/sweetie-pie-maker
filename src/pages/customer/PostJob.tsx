@@ -34,6 +34,8 @@ export default function PostJob() {
   const [budget, setBudget] = useState('');
   const [locationName, setLocationName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [jobLat, setJobLat] = useState<number>(13.0827);
+  const [jobLng, setJobLng] = useState<number>(80.2707);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
