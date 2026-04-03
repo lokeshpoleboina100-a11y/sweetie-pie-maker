@@ -21,6 +21,8 @@ import WorkerEarnings from "./pages/worker/WorkerEarnings";
 import WorkerProfile from "./pages/worker/WorkerProfile";
 import WorkerSettings from "./pages/worker/WorkerSettings";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import EditProfile from "./pages/EditProfile";
+import AIHelpDesk from "./pages/AIHelpDesk";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
