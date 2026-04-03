@@ -56,6 +56,10 @@ const AppRoutes = () => (
     <Route path="/worker/profile" element={<ProtectedRoute><WorkerProfile /></ProtectedRoute>} />
     <Route path="/worker/settings" element={<ProtectedRoute><WorkerSettings /></ProtectedRoute>} />
     
+    {/* Shared Routes */}
+    <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+    <Route path="/ai-help" element={<ProtectedRoute><AIHelpDesk /></ProtectedRoute>} />
+    
     {/* Admin Routes */}
     <Route path="/admin/*" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
     
