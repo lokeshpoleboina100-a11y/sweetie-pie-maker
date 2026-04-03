@@ -40,6 +40,7 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Landing />} />
     <Route path="/login" element={<Login />} />
+    <Route path="/phone-login" element={<PhoneLogin />} />
     
     {/* Customer Routes */}
     <Route path="/customer" element={<ProtectedRoute><CustomerHome /></ProtectedRoute>} />
