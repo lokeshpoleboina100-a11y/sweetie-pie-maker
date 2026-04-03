@@ -53,9 +53,9 @@ export default function PostJob() {
         budget_max: budgetVal,
         is_negotiable: isNegotiable,
         is_instant: isInstant,
-        location_name: locationName || 'Anna Nagar, Chennai',
-        latitude: 13.0827,
-        longitude: 80.2707,
+        location_name: locationName || 'Not set',
+        latitude: jobLat,
+        longitude: jobLng,
       });
 
       if (error) throw error;
