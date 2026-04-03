@@ -115,7 +115,16 @@ export default function PostJob() {
 
         <div className="space-y-2">
           <Label className="font-bold">{t('post_job.location')}</Label>
-          <Input placeholder={t('post_job.location_placeholder')} className="h-12 rounded-xl" value={locationName} onChange={(e) => setLocationName(e.target.value)} />
+          <LocationPicker
+            latitude={jobLat}
+            longitude={jobLng}
+            locationName={locationName}
+            onLocationChange={(lat, lng, name) => {
+              setJobLat(lat);
+              setJobLng(lng);
+              setLocationName(name);
+            }}
+          />
         </div>
 
         <div className="space-y-2">
