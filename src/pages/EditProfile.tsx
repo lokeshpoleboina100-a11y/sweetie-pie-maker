@@ -143,6 +143,22 @@ export default function EditProfile() {
           </div>
         )}
 
+        {/* Map Location Picker */}
+        <div className="space-y-1.5">
+          <Label>{t('edit_profile.map_location', 'Pin Location on Map')}</Label>
+          <LocationPicker
+            latitude={profile?.latitude}
+            longitude={profile?.longitude}
+            locationName={profile?.location_name || ''}
+            onLocationChange={(lat, lng, name) => {
+              // Auto-fill district from map location
+              if (!district) {
+                setDistrict(name.split(',')[0]?.trim() || '');
+              }
+            }}
+          />
+        </div>
+
         <Button onClick={handleSave} disabled={saving} className="w-full h-12 rounded-xl font-bold gap-2">
           <Save className="h-5 w-5" />
           {saving ? t('edit_profile.saving', 'Saving...') : t('edit_profile.save', 'Save Profile')}
