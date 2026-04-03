@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { locationData } from '@/lib/location-data';
 import AvatarUpload from '@/components/AvatarUpload';
 import AppHeader from '@/components/AppHeader';
+import LocationPicker from '@/components/LocationPicker';
 
 export default function EditProfile() {
   const { profile, user, refreshProfile } = useAuth();
