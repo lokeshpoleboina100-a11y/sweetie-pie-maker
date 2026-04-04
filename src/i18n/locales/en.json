@@ -31,7 +31,8 @@
     "profile": "Profile",
     "jobs": "Jobs",
     "my_jobs": "My Jobs",
-    "earnings": "Earnings"
+    "earnings": "Earnings",
+    "status": "Status"
   },
   "customer_home": {
     "need_something": "Need something done?",
