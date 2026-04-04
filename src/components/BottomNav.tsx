@@ -13,6 +13,7 @@ interface NavItem {
 const customerNav: NavItem[] = [
   { icon: Home, labelKey: 'nav.home', path: '/customer' },
   { icon: Plus, labelKey: 'nav.post_job', path: '/customer/post-job' },
+  { icon: CircleDot, labelKey: 'nav.status', path: '/stories' },
   { icon: MessageSquare, labelKey: 'nav.chat', path: '/customer/chats' },
   { icon: User, labelKey: 'nav.profile', path: '/customer/profile' },
 ];
