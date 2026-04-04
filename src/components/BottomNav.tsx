@@ -21,6 +21,7 @@ const customerNav: NavItem[] = [
 const workerNav: NavItem[] = [
   { icon: Search, labelKey: 'nav.jobs', path: '/worker' },
   { icon: Briefcase, labelKey: 'nav.my_jobs', path: '/worker/my-jobs' },
+  { icon: CircleDot, labelKey: 'nav.status', path: '/stories' },
   { icon: Wallet, labelKey: 'nav.earnings', path: '/worker/earnings' },
   { icon: User, labelKey: 'nav.profile', path: '/worker/profile' },
 ];
