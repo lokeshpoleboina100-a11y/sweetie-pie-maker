@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Search, MessageSquare, User, Plus, Briefcase, Wallet } from 'lucide-react';
+import { Home, Search, MessageSquare, User, Plus, Briefcase, Wallet, CircleDot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserRole } from '@/lib/types';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,7 @@ interface NavItem {
 const customerNav: NavItem[] = [
   { icon: Home, labelKey: 'nav.home', path: '/customer' },
   { icon: Plus, labelKey: 'nav.post_job', path: '/customer/post-job' },
+  { icon: CircleDot, labelKey: 'nav.status', path: '/stories' },
   { icon: MessageSquare, labelKey: 'nav.chat', path: '/customer/chats' },
   { icon: User, labelKey: 'nav.profile', path: '/customer/profile' },
 ];
@@ -20,6 +21,7 @@ const customerNav: NavItem[] = [
 const workerNav: NavItem[] = [
   { icon: Search, labelKey: 'nav.jobs', path: '/worker' },
   { icon: Briefcase, labelKey: 'nav.my_jobs', path: '/worker/my-jobs' },
+  { icon: CircleDot, labelKey: 'nav.status', path: '/stories' },
   { icon: Wallet, labelKey: 'nav.earnings', path: '/worker/earnings' },
   { icon: User, labelKey: 'nav.profile', path: '/worker/profile' },
 ];

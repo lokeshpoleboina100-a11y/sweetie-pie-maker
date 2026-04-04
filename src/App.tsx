@@ -25,6 +25,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import EditProfile from "./pages/EditProfile";
 import AIHelpDesk from "./pages/AIHelpDesk";
 import PhoneLogin from "./pages/PhoneLogin";
+import Stories from "./pages/Stories";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,7 @@ const AppRoutes = () => (
     {/* Shared Routes */}
     <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
     <Route path="/ai-help" element={<ProtectedRoute><AIHelpDesk /></ProtectedRoute>} />
+    <Route path="/stories" element={<ProtectedRoute><Stories /></ProtectedRoute>} />
     
     {/* Admin Routes */}
     <Route path="/admin/*" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
