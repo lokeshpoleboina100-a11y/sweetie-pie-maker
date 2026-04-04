@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Search, MessageSquare, User, Plus, Briefcase, Wallet } from 'lucide-react';
+import { Home, Search, MessageSquare, User, Plus, Briefcase, Wallet, CircleDot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserRole } from '@/lib/types';
 import { useTranslation } from 'react-i18next';
