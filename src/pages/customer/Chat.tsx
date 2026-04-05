@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Send, Loader2, Smile, Paperclip, Reply, X, Image as ImageIcon } from 'lucide-react';
+import { Send, Loader2, Smile, Paperclip, Reply, X, Image as ImageIcon, Mic } from 'lucide-react';
+import VoiceRecorder from '@/components/VoiceRecorder';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
