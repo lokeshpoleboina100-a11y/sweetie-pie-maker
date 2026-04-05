@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Send, Loader2, Smile, Paperclip, Reply, X, Image as ImageIcon, Mic } from 'lucide-react';
+import { Send, Loader2, Smile, Paperclip, Reply, X, Image as ImageIcon, Mic, Phone, Video } from 'lucide-react';
 import VoiceRecorder from '@/components/VoiceRecorder';
+import VideoCall from '@/components/VideoCall';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +40,7 @@ export default function Chat() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout>>();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showCall, setShowCall] = useState(false);
 
   useEffect(() => {
     if (!jobId) return;
@@ -214,7 +216,19 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <AppHeader title="Chat" showBack />
+      {showCall && jobId && (
+        <VideoCall jobId={jobId} onClose={() => setShowCall(false)} />
+      )}
+      <AppHeader title="Chat" showBack>
+        <div className="flex gap-1">
+          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowCall(true)}>
+            <Phone className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowCall(true)}>
+            <Video className="h-5 w-5" />
+          </Button>
+        </div>
+      </AppHeader>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
         {messages.length === 0 && (

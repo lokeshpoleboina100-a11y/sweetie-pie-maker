@@ -9,12 +9,14 @@ import ThemeToggle from '@/components/ThemeToggle';
 import AdminOverview from './AdminOverview';
 import AdminUsers from './AdminUsers';
 import AdminJobs from './AdminJobs';
+import AdminVerification from './AdminVerification';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { label: 'Overview', path: '/admin', icon: LayoutDashboard },
   { label: 'Users', path: '/admin/users', icon: Users },
   { label: 'Jobs', path: '/admin/jobs', icon: Briefcase },
+  { label: 'Verification', path: '/admin/verification', icon: Shield },
 ];
 
 function NavContent({ onNavigate }: { onNavigate?: () => void }) {
@@ -120,6 +122,7 @@ export default function AdminDashboard() {
             <Route index element={<AdminOverview />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="jobs" element={<AdminJobs />} />
+            <Route path="verification" element={<AdminVerification />} />
           </Routes>
         </main>
       </div>

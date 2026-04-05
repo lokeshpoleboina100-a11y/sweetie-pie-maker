@@ -8,9 +8,10 @@ interface AppHeaderProps {
   showBack?: boolean;
   showNotifications?: boolean;
   right?: React.ReactNode;
+  children?: React.ReactNode;
 }
 
-export default function AppHeader({ title, showBack, showNotifications = false, right }: AppHeaderProps) {
+export default function AppHeader({ title, showBack, showNotifications = false, right, children }: AppHeaderProps) {
   const navigate = useNavigate();
 
   return (
@@ -25,6 +26,7 @@ export default function AppHeader({ title, showBack, showNotifications = false, 
           <h1 className="text-lg font-bold truncate">{title}</h1>
         </div>
         <div className="flex items-center gap-1">
+          {children}
           <ThemeToggle />
           {right}
           {showNotifications && (
