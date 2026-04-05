@@ -269,6 +269,13 @@ export default function Chat() {
                       📎 Download File
                     </a>
                   )}
+                  {msg.attachment_url && msg.attachment_type === 'voice' && (
+                    <audio
+                      src={msg.attachment_url}
+                      controls
+                      className="mb-2 max-w-[220px]"
+                    />
+                  )}
 
                   {msg.text}
 
@@ -400,9 +407,13 @@ export default function Chat() {
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             className="h-12 rounded-2xl flex-1"
           />
-          <Button size="icon" className="h-12 w-12 rounded-2xl shrink-0" onClick={handleSend} disabled={!input.trim()}>
-            <Send className="h-5 w-5" />
-          </Button>
+          {input.trim() ? (
+            <Button size="icon" className="h-12 w-12 rounded-2xl shrink-0" onClick={handleSend}>
+              <Send className="h-5 w-5" />
+            </Button>
+          ) : (
+            <VoiceRecorder onSend={handleVoiceSend} />
+          )}
         </div>
       </div>
     </div>
