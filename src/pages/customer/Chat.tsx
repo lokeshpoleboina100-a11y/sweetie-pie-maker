@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Send, Loader2, Smile, Paperclip, Reply, X, Image as ImageIcon } from 'lucide-react';
+import { Send, Loader2, Smile, Paperclip, Reply, X, Image as ImageIcon, Mic } from 'lucide-react';
+import VoiceRecorder from '@/components/VoiceRecorder';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -179,6 +180,25 @@ export default function Chat() {
     });
   };
 
+  const handleVoiceSend = async (blob: Blob, durationSec: number) => {
+    if (!user || !jobId) return;
+    const path = `${jobId}/${Date.now()}.webm`;
+    const { error } = await supabase.storage.from('avatars').upload(path, blob, {
+      contentType: 'audio/webm',
+    });
+    if (error) return;
+    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+    const mins = Math.floor(durationSec / 60);
+    const secs = durationSec % 60;
+    await supabase.from('messages').insert({
+      job_id: jobId,
+      sender_id: user.id,
+      text: `🎤 Voice message (${mins}:${secs.toString().padStart(2, '0')})`,
+      attachment_url: urlData.publicUrl,
+      attachment_type: 'voice',
+    });
+  };
+
   const getReplyMessage = (id: string | null) => messages.find((m) => m.id === id);
 
   if (loading) {
@@ -248,6 +268,13 @@ export default function Chat() {
                     >
                       📎 Download File
                     </a>
+                  )}
+                  {msg.attachment_url && msg.attachment_type === 'voice' && (
+                    <audio
+                      src={msg.attachment_url}
+                      controls
+                      className="mb-2 max-w-[220px]"
+                    />
                   )}
 
                   {msg.text}
@@ -380,9 +407,13 @@ export default function Chat() {
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             className="h-12 rounded-2xl flex-1"
           />
-          <Button size="icon" className="h-12 w-12 rounded-2xl shrink-0" onClick={handleSend} disabled={!input.trim()}>
-            <Send className="h-5 w-5" />
-          </Button>
+          {input.trim() ? (
+            <Button size="icon" className="h-12 w-12 rounded-2xl shrink-0" onClick={handleSend}>
+              <Send className="h-5 w-5" />
+            </Button>
+          ) : (
+            <VoiceRecorder onSend={handleVoiceSend} />
+          )}
         </div>
       </div>
     </div>
