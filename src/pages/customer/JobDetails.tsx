@@ -11,6 +11,7 @@ import { CATEGORY_ICONS, CATEGORY_LABELS } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
+import Milestones from '@/components/Milestones';
 
 type DbJob = Tables<'jobs'>;
 
@@ -126,12 +127,22 @@ export default function JobDetails() {
         </Card>
 
         {(job.status === 'in_progress' || job.status === 'completed') && job.accepted_worker_id && (
-          <Button
-            className="w-full h-12 rounded-xl font-bold text-base gap-2"
-            onClick={() => navigate(`/customer/payment/${job.id}`)}
-          >
-            <IndianRupee className="h-5 w-5" /> Pay Worker
-          </Button>
+          <>
+            <Milestones
+              jobId={job.id}
+              customerId={job.customer_id}
+              workerId={job.accepted_worker_id}
+              escrowBalance={(job as any).escrow_balance ?? 0}
+              onEscrowChange={(b) => setJob({ ...job, escrow_balance: b } as any)}
+            />
+            <Button
+              variant="outline"
+              className="w-full h-12 rounded-xl font-bold text-base gap-2"
+              onClick={() => navigate(`/customer/payment/${job.id}`)}
+            >
+              <IndianRupee className="h-5 w-5" /> One-time payment
+            </Button>
+          </>
         )}
 
         <h3 className="font-bold text-base">{bids.length} Bids</h3>
