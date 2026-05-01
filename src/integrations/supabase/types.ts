@@ -58,6 +58,57 @@ export type Database = {
           },
         ]
       }
+      escrow_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_id: string
+          id: string
+          job_id: string
+          milestone_id: string | null
+          notes: string | null
+          type: Database["public"]["Enums"]["escrow_tx_type"]
+          worker_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_id: string
+          id?: string
+          job_id: string
+          milestone_id?: string | null
+          notes?: string | null
+          type: Database["public"]["Enums"]["escrow_tx_type"]
+          worker_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_id?: string
+          id?: string
+          job_id?: string
+          milestone_id?: string | null
+          notes?: string | null
+          type?: Database["public"]["Enums"]["escrow_tx_type"]
+          worker_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escrow_transactions_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escrow_transactions_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "milestones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           accepted_worker_id: string | null
@@ -68,6 +119,7 @@ export type Database = {
           created_at: string
           customer_id: string
           description: string
+          escrow_balance: number
           id: string
           images: string[] | null
           is_instant: boolean | null
@@ -88,6 +140,7 @@ export type Database = {
           created_at?: string
           customer_id: string
           description?: string
+          escrow_balance?: number
           id?: string
           images?: string[] | null
           is_instant?: boolean | null
@@ -108,6 +161,7 @@ export type Database = {
           created_at?: string
           customer_id?: string
           description?: string
+          escrow_balance?: number
           id?: string
           images?: string[] | null
           is_instant?: boolean | null
@@ -171,6 +225,65 @@ export type Database = {
             columns: ["reply_to"]
             isOneToOne: false
             referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      milestones: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_id: string
+          description: string | null
+          due_date: string | null
+          id: string
+          job_id: string
+          order_index: number
+          released_at: string | null
+          status: Database["public"]["Enums"]["milestone_status"]
+          submitted_at: string | null
+          title: string
+          updated_at: string
+          worker_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          job_id: string
+          order_index?: number
+          released_at?: string | null
+          status?: Database["public"]["Enums"]["milestone_status"]
+          submitted_at?: string | null
+          title: string
+          updated_at?: string
+          worker_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          job_id?: string
+          order_index?: number
+          released_at?: string | null
+          status?: Database["public"]["Enums"]["milestone_status"]
+          submitted_at?: string | null
+          title?: string
+          updated_at?: string
+          worker_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "milestones_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
         ]
@@ -432,6 +545,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       bid_status: "pending" | "accepted" | "rejected"
+      escrow_tx_type: "fund" | "release" | "refund"
       job_category:
         | "repair"
         | "plumbing"
@@ -442,6 +556,12 @@ export type Database = {
         | "cleaning"
         | "freelance"
       job_status: "open" | "in_progress" | "completed" | "cancelled"
+      milestone_status:
+        | "pending"
+        | "in_progress"
+        | "submitted"
+        | "approved"
+        | "released"
       payment_method: "upi" | "cash" | "wallet"
       payment_status: "pending" | "completed" | "failed" | "refunded"
       user_role: "customer" | "worker"
@@ -574,6 +694,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       bid_status: ["pending", "accepted", "rejected"],
+      escrow_tx_type: ["fund", "release", "refund"],
       job_category: [
         "repair",
         "plumbing",
@@ -585,6 +706,13 @@ export const Constants = {
         "freelance",
       ],
       job_status: ["open", "in_progress", "completed", "cancelled"],
+      milestone_status: [
+        "pending",
+        "in_progress",
+        "submitted",
+        "approved",
+        "released",
+      ],
       payment_method: ["upi", "cash", "wallet"],
       payment_status: ["pending", "completed", "failed", "refunded"],
       user_role: ["customer", "worker"],
