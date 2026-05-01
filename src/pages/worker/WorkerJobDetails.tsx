@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
+import Milestones from '@/components/Milestones';
 
 type DbJob = Tables<'jobs'>;
 
@@ -103,6 +104,15 @@ export default function WorkerJobDetails() {
             <MapPin className="h-3.5 w-3.5" /> {job.location_name || 'Unknown'}
           </div>
         </Card>
+
+        {job.accepted_worker_id === user?.id && (job.status === 'in_progress' || job.status === 'completed') && (
+          <Milestones
+            jobId={job.id}
+            customerId={job.customer_id}
+            workerId={job.accepted_worker_id}
+            escrowBalance={(job as any).escrow_balance ?? 0}
+          />
+        )}
 
         {!showBidForm ? (
           <div className="space-y-3">
