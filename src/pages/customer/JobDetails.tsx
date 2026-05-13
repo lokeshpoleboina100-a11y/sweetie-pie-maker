@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
 import Milestones from '@/components/Milestones';
+import AISmartMatch from '@/components/AISmartMatch';
 
 type DbJob = Tables<'jobs'>;
 
@@ -125,6 +126,10 @@ export default function JobDetails() {
             </span>
           </div>
         </Card>
+
+        {job.status === 'open' && (
+          <AISmartMatch job={job} onChat={() => navigate(`/customer/chat/${job.id}`)} />
+        )}
 
         {(job.status === 'in_progress' || job.status === 'completed') && job.accepted_worker_id && (
           <>
