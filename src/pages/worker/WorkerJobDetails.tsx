@@ -159,9 +159,10 @@ export default function WorkerJobDetails() {
               </div>
               <div className="space-y-2">
                 <Label className="font-bold">Message to Customer</Label>
-                <Textarea placeholder="Why should they choose you?" className="rounded-xl" required value={message} onChange={(e) => setMessage(e.target.value)} />
+                <Textarea placeholder="Why should they choose you?" className="rounded-xl" required value={message} onChange={(e) => setMessage(e.target.value)} rows={5} />
               </div>
             </Card>
+            <AIProposalGenerator job={job} onUseProposal={(t) => setMessage(t)} />
             <Button type="submit" size="lg" className="w-full h-14 text-base font-bold rounded-2xl gap-2" disabled={isSubmitting}>
               <Send className="h-5 w-5" /> {isSubmitting ? 'Submitting...' : 'Submit Bid'}
             </Button>
