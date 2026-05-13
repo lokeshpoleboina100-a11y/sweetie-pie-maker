@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
 import Milestones from '@/components/Milestones';
+import AIProposalGenerator from '@/components/AIProposalGenerator';
 
 type DbJob = Tables<'jobs'>;
 
