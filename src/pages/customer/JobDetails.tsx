@@ -127,6 +127,10 @@ export default function JobDetails() {
           </div>
         </Card>
 
+        {job.status === 'open' && (
+          <AISmartMatch job={job} onChat={() => navigate(`/customer/chat/${job.id}`)} />
+        )}
+
         {(job.status === 'in_progress' || job.status === 'completed') && job.accepted_worker_id && (
           <>
             <Milestones
