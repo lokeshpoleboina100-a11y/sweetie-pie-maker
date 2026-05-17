@@ -27,6 +27,7 @@ import EditProfile from "./pages/EditProfile";
 import AIHelpDesk from "./pages/AIHelpDesk";
 import PhoneLogin from "./pages/PhoneLogin";
 import EmailOtpLogin from "./pages/EmailOtpLogin";
+import OtpLogin from "./pages/OtpLogin";
 import Stories from "./pages/Stories";
 import NotFound from "./pages/NotFound";
 
