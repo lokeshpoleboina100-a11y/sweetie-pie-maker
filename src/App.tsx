@@ -26,6 +26,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import EditProfile from "./pages/EditProfile";
 import AIHelpDesk from "./pages/AIHelpDesk";
 import PhoneLogin from "./pages/PhoneLogin";
+import EmailOtpLogin from "./pages/EmailOtpLogin";
 import Stories from "./pages/Stories";
 import NotFound from "./pages/NotFound";
 
@@ -43,6 +44,7 @@ const AppRoutes = () => (
     <Route path="/" element={<Landing />} />
     <Route path="/login" element={<Login />} />
     <Route path="/phone-login" element={<PhoneLogin />} />
+    <Route path="/email-otp" element={<EmailOtpLogin />} />
     
     {/* Customer Routes */}
     <Route path="/customer" element={<ProtectedRoute><CustomerHome /></ProtectedRoute>} />

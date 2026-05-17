@@ -176,6 +176,14 @@ export default function Login() {
         >
           {t('phone_login.use_phone', 'Login with Phone Number')}
         </button>
+
+        <button
+          type="button"
+          className="w-full text-center text-sm text-muted-foreground font-medium mt-2"
+          onClick={() => navigate(`/email-otp?role=${role}`)}
+        >
+          Login with Email OTP
+        </button>
       </motion.form>
     </div>
   );
