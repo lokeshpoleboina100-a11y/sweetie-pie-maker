@@ -43,6 +43,7 @@ export default function PhoneLogin() {
       });
       if (error) throw error;
       setStep('otp');
+      setCooldown(45);
       toast({ title: 'OTP Sent! 📱', description: `Verification code sent to ${phone}` });
     } catch (e: any) {
       toast({ title: 'Failed to send OTP', description: e.message, variant: 'destructive' });
