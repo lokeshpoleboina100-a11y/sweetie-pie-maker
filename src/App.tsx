@@ -44,6 +44,7 @@ const AppRoutes = () => (
     <Route path="/" element={<Landing />} />
     <Route path="/login" element={<Login />} />
     <Route path="/phone-login" element={<PhoneLogin />} />
+    <Route path="/email-otp" element={<EmailOtpLogin />} />
     
     {/* Customer Routes */}
     <Route path="/customer" element={<ProtectedRoute><CustomerHome /></ProtectedRoute>} />
