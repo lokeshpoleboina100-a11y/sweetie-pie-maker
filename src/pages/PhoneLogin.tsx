@@ -20,6 +20,13 @@ export default function PhoneLogin() {
   const [phone, setPhone] = useState('+91');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
 
   const sendOtp = async () => {
     if (phone.length < 10) {
