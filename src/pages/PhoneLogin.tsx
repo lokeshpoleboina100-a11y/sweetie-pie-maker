@@ -134,11 +134,11 @@ export default function PhoneLogin() {
 
             <button
               type="button"
-              className="w-full text-center text-sm text-muted-foreground mt-4"
+              className="w-full text-center text-sm text-muted-foreground mt-4 disabled:opacity-50"
               onClick={sendOtp}
-              disabled={loading}
+              disabled={loading || cooldown > 0}
             >
-              {t('phone_login.resend', 'Resend OTP')}
+              {cooldown > 0 ? `Resend OTP in ${cooldown}s` : t('phone_login.resend', 'Resend OTP')}
             </button>
           </motion.div>
         )}
