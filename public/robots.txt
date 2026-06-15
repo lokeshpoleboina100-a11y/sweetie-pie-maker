@@ -12,3 +12,11 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /customer/
+Disallow: /worker/
+Disallow: /edit-profile
+Disallow: /ai-help
+Disallow: /stories
+
+Sitemap: https://sweetie-pie-maker.lovable.app/sitemap.xml
