@@ -197,12 +197,13 @@ export default function Milestones({
       .from('milestones')
       .update({ status: 'released', released_at: new Date().toISOString() })
       .eq('id', m.id);
+    // escrow_balance is recomputed server-side from escrow_transactions via trigger
     const newBal = Math.max(0, balance - m.amount);
-    await supabase.from('jobs').update({ escrow_balance: newBal }).eq('id', jobId);
     setBalance(newBal);
     onEscrowChange?.(newBal);
     toast({ title: 'Payment released 🎉', description: `₹${m.amount} sent to worker.` });
   };
+
 
   const removeMilestone = async (m: Milestone) => {
     const { error } = await supabase.from('milestones').delete().eq('id', m.id);
