@@ -158,12 +158,13 @@ export default function Milestones({
       return;
     }
     await supabase.from('milestones').update({ status: 'in_progress' }).eq('id', m.id);
+    // escrow_balance is recomputed server-side from escrow_transactions via trigger
     const newBal = balance + m.amount;
-    await supabase.from('jobs').update({ escrow_balance: newBal }).eq('id', jobId);
     setBalance(newBal);
     onEscrowChange?.(newBal);
     toast({ title: 'Funds held in escrow', description: `₹${m.amount} secured for the worker.` });
   };
+
 
   const submitMilestone = async (m: Milestone) => {
     const { error } = await supabase
