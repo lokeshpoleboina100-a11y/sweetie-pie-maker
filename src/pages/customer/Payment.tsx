@@ -96,7 +96,7 @@ export default function Payment() {
         commission,
         payment_method: 'upi' as const,
         upi_transaction_id: txnId,
-        status: 'completed' as const,
+        status: 'pending' as const,
       });
 
       if (error) {
@@ -105,8 +105,9 @@ export default function Payment() {
         return;
       }
 
-      // Mark job as completed
-      await supabase.from('jobs').update({ status: 'completed' }).eq('id', jobId!);
+      // Job is marked completed only after the payment is verified server-side
+      // (e.g. via a payment-gateway webhook that flips status to 'completed').
+
 
       setStep('success');
     }

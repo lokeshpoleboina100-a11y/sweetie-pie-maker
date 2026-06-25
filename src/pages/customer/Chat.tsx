@@ -167,17 +167,19 @@ export default function Chat() {
 
     const ext = file.name.split('.').pop();
     const path = `${jobId}/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from('avatars').upload(path, file);
+    const { error } = await supabase.storage.from('chat-attachments').upload(path, file);
     if (error) return;
 
-    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+    const { data: signed } = await supabase.storage
+      .from('chat-attachments')
+      .createSignedUrl(path, 60 * 60 * 24 * 7);
     const isImage = file.type.startsWith('image/');
 
     await supabase.from('messages').insert({
       job_id: jobId,
       sender_id: user.id,
       text: isImage ? '📷 Photo' : `📎 ${file.name}`,
-      attachment_url: urlData.publicUrl,
+      attachment_url: signed?.signedUrl ?? null,
       attachment_type: isImage ? 'image' : 'file',
     });
   };
@@ -185,21 +187,24 @@ export default function Chat() {
   const handleVoiceSend = async (blob: Blob, durationSec: number) => {
     if (!user || !jobId) return;
     const path = `${jobId}/${Date.now()}.webm`;
-    const { error } = await supabase.storage.from('avatars').upload(path, blob, {
+    const { error } = await supabase.storage.from('chat-attachments').upload(path, blob, {
       contentType: 'audio/webm',
     });
     if (error) return;
-    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+    const { data: signed } = await supabase.storage
+      .from('chat-attachments')
+      .createSignedUrl(path, 60 * 60 * 24 * 7);
     const mins = Math.floor(durationSec / 60);
     const secs = durationSec % 60;
     await supabase.from('messages').insert({
       job_id: jobId,
       sender_id: user.id,
       text: `🎤 Voice message (${mins}:${secs.toString().padStart(2, '0')})`,
-      attachment_url: urlData.publicUrl,
+      attachment_url: signed?.signedUrl ?? null,
       attachment_type: 'voice',
     });
   };
+
 
   const getReplyMessage = (id: string | null) => messages.find((m) => m.id === id);
 

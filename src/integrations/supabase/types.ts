@@ -534,6 +534,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_job_chat: {
+        Args: { _job_id: string; _user_id: string }
+        Returns: boolean
+      }
       get_own_phone: { Args: never; Returns: string }
       has_role: {
         Args: {
