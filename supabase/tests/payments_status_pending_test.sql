@@ -7,13 +7,13 @@
 -- Each test wraps work in a SAVEPOINT and asserts the trigger raises.
 -- Uses an existing job (customer + accepted_worker) for realism.
 
-\set JOB_ID    '4b023cfc-43df-4e11-8fe4-443a0439e3e1'
-\set CUSTOMER  'f0dc6080-e8de-43d5-9f3b-a9f724853c22'
+\set JOB_ID    '9004d15f-6ea6-4a5f-b1e1-70135ed4d058'
+\set CUSTOMER  '4b023cfc-43df-4e11-8fe4-443a0439e3e1'
 
 BEGIN;
 
 -- Simulate an authenticated customer's JWT claims (auth.uid() reads this GUC)
-SET LOCAL "request.jwt.claims" = '{"sub":"f0dc6080-e8de-43d5-9f3b-a9f724853c22","role":"authenticated"}';
+SET LOCAL "request.jwt.claims" = '{"sub":"4b023cfc-43df-4e11-8fe4-443a0439e3e1","role":"authenticated"}';
 
 -- ---------------------------------------------------------------------------
 -- TEST 1: INSERT with status='completed' as the customer MUST be rejected.
@@ -21,8 +21,8 @@ SET LOCAL "request.jwt.claims" = '{"sub":"f0dc6080-e8de-43d5-9f3b-a9f724853c22",
 SAVEPOINT t1;
 DO $$
 DECLARE
-  v_job uuid := '4b023cfc-43df-4e11-8fe4-443a0439e3e1';
-  v_cust uuid := 'f0dc6080-e8de-43d5-9f3b-a9f724853c22';
+  v_job uuid := '9004d15f-6ea6-4a5f-b1e1-70135ed4d058';
+  v_cust uuid := '4b023cfc-43df-4e11-8fe4-443a0439e3e1';
   v_worker uuid;
   v_err text;
 BEGIN
@@ -48,8 +48,8 @@ ROLLBACK TO SAVEPOINT t1;
 SAVEPOINT t2;
 DO $$
 DECLARE
-  v_job uuid := '4b023cfc-43df-4e11-8fe4-443a0439e3e1';
-  v_cust uuid := 'f0dc6080-e8de-43d5-9f3b-a9f724853c22';
+  v_job uuid := '9004d15f-6ea6-4a5f-b1e1-70135ed4d058';
+  v_cust uuid := '4b023cfc-43df-4e11-8fe4-443a0439e3e1';
   v_worker uuid;
   v_id uuid;
   v_status text;
