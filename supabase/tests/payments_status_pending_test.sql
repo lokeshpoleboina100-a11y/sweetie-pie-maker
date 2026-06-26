@@ -12,8 +12,7 @@
 
 BEGIN;
 
--- Simulate an authenticated customer hitting PostgREST
-SET LOCAL role = authenticated;
+-- Simulate an authenticated customer's JWT claims (auth.uid() reads this GUC)
 SET LOCAL "request.jwt.claims" = '{"sub":"f0dc6080-e8de-43d5-9f3b-a9f724853c22","role":"authenticated"}';
 
 -- ---------------------------------------------------------------------------
