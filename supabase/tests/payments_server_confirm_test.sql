@@ -40,7 +40,7 @@ BEGIN
   );
 
   INSERT INTO public.payments
-    (job_id, customer_id, worker_id, amount, commission, payment_method, status, transaction_id)
+    (job_id, customer_id, worker_id, amount, commission, payment_method, status, upi_transaction_id)
   VALUES (v_job, v_customer, v_worker, 100, 10, 'upi', 'pending', 'TEST-TXN-1')
   RETURNING id, status::text INTO v_id, v_status;
 
@@ -80,7 +80,7 @@ BEGIN
 
   BEGIN
     UPDATE public.payments
-       SET transaction_id = 'CUSTOMER-TAMPER'
+       SET upi_transaction_id = 'CUSTOMER-TAMPER'
      WHERE id = v_id;
     RAISE EXCEPTION 'TEST 2 FAILED: customer mutated a completed payment';
   EXCEPTION WHEN others THEN
@@ -98,7 +98,7 @@ BEGIN
   PERFORM set_config('request.jwt.claims', '', true);
 
   INSERT INTO public.payments
-    (job_id, customer_id, worker_id, amount, commission, payment_method, status, transaction_id)
+    (job_id, customer_id, worker_id, amount, commission, payment_method, status, upi_transaction_id)
   VALUES (v_job, v_customer, v_worker, 50, 5, 'upi', 'completed', 'TEST-TXN-SERVER')
   RETURNING status::text INTO v_status;
 
