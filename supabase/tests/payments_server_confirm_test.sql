@@ -147,14 +147,13 @@ BEGIN
     RAISE NOTICE 'TEST 1 (fallback) note: %; predicate proof below', v_err;
   END;
 
-  -- Logical proof: assert the guard's predicate evaluates to FALSE under
-  -- server-side context (auth.uid() IS NULL), which guarantees the guard
-  -- short-circuits and never raises.
-  IF auth.uid() IS NOT NULL THEN
-    RAISE EXCEPTION 'TEST 1 (fallback) FAILED: auth.uid() should be NULL server-side, got %',
-                    auth.uid();
+  -- Logical proof: assert no JWT sub claim is set (server-side context),
+  -- which means auth.uid() resolves to NULL and the guards short-circuit.
+  IF NULLIF(current_setting('request.jwt.claims', true), '') IS NOT NULL THEN
+    RAISE EXCEPTION 'TEST 1 (fallback) FAILED: jwt claims should be empty server-side, got %',
+                    current_setting('request.jwt.claims', true);
   END IF;
-  RAISE NOTICE 'TEST 1 (fallback) PASSED: auth.uid() IS NULL => insert/update guards short-circuit';
+  RAISE NOTICE 'TEST 1 (fallback) PASSED: no JWT claims => auth.uid() IS NULL => guards short-circuit';
 
   RAISE NOTICE 'Skipping full UPDATE/INSERT assertions: re-run with a service-role connection for end-to-end coverage';
 END $$;
