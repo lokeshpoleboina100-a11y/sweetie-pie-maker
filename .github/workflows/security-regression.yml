@@ -1,0 +1,65 @@
+name: Security regression
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "supabase/**"
+      - "scripts/run-security-tests.sh"
+      - ".github/workflows/security-regression.yml"
+  workflow_dispatch:
+
+jobs:
+  sql-rls-suite:
+    name: Supabase RLS / permissions suite
+    runs-on: ubuntu-latest
+    # SUPABASE_DB_URL must be set as a repository secret pointing at a
+    # disposable database (a staging branch or ephemeral preview DB).
+    # Tests wrap everything in BEGIN/ROLLBACK, but never point this at prod.
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install psql
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Verify database secret is set
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::SUPABASE_DB_URL secret is not configured."
+            exit 1
+          fi
+
+      - name: Run SQL regression suite
+        run: bash scripts/run-security-tests.sh
+
+  npm-audit:
+    name: Dependency audit (high+)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Fail on high/critical advisories
+        run: bun audit --audit-level=high
+
+  supabase-linter:
+    name: Supabase database linter
+    runs-on: ubuntu-latest
+    if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' && secrets.SUPABASE_PROJECT_REF != '' }}
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Run database linter
+        run: |
+          supabase db lint \
+            --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}" \
+            --level warning
