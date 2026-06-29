@@ -61,13 +61,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, role: 'customer' | 'worker', fullName: string) => {
-    const { error } = await supabase.auth.signUp({
+    // Always set emailRedirectTo so confirmation links return to this app origin
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/`,
         data: { role, full_name: fullName },
       },
     });
+    // Supabase returns a "fake" user with empty identities array when the
+    // email is already registered (to prevent user enumeration). Detect that
+    // case and surface a clear duplicate-account error.
+    if (!error && data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      return {
+        error: new Error('An account with this email already exists. Please sign in instead.'),
+      };
+    }
     return { error: error as Error | null };
   };
 
