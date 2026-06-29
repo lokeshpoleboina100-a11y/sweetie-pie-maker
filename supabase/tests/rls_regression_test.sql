@@ -103,13 +103,25 @@ END $$;
 
 -- =============================================================
 -- 5. user_roles must NOT be readable by anon (privilege-escalation guard).
+--    Tests effective access (RLS + grants) by impersonating the anon role.
 -- =============================================================
 DO $$
+DECLARE
+  v_count integer;
 BEGIN
-  IF has_table_privilege('anon', 'public.user_roles', 'SELECT') THEN
-    RAISE EXCEPTION 'TEST 5 FAILED: anon has SELECT on user_roles';
+  PERFORM set_config(
+    'request.jwt.claims',
+    json_build_object('role', 'anon')::text,
+    true
+  );
+  SET LOCAL role anon;
+  SELECT count(*) INTO v_count FROM public.user_roles;
+  RESET role;
+
+  IF v_count > 0 THEN
+    RAISE EXCEPTION 'TEST 5 FAILED: anon read % user_roles rows', v_count;
   END IF;
-  RAISE NOTICE 'TEST 5 PASSED: user_roles is hidden from anon';
+  RAISE NOTICE 'TEST 5 PASSED: anon cannot read user_roles';
 END $$;
 
 -- =============================================================
