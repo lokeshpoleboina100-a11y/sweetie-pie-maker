@@ -70,13 +70,8 @@ BEGIN
     JOIN pg_namespace n ON n.oid = c.relnamespace
     CROSS JOIN (VALUES ('authenticated'), ('service_role')) AS r(role_name)
     WHERE n.nspname = 'public' AND c.relkind = 'r'
-      AND NOT EXISTS (
-        SELECT 1 FROM information_schema.role_table_grants g
-        WHERE g.table_schema = 'public'
-          AND g.table_name = c.relname
-          AND g.grantee = r.role_name
-          AND g.privilege_type IN ('SELECT','INSERT','UPDATE','DELETE')
-      )
+      AND NOT has_table_privilege(r.role_name, c.oid, 'SELECT')
+      AND NOT has_table_privilege(r.role_name, c.oid, 'INSERT')
   ) t;
 
   IF v_bad IS NOT NULL THEN
