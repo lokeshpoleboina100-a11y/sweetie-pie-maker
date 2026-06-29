@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, LogIn, UserPlus } from 'lucide-react';
@@ -9,6 +10,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { lovable } from '@/integrations/lovable/index';
 import { Separator } from '@/components/ui/separator';
+
+// Zod schemas — validate format/length before hitting the auth server.
+const emailSchema = z.string().trim().email('Please enter a valid email address').max(255);
+const passwordSchema = z
+  .string()
+  .min(6, 'Password must be at least 6 characters')
+  .max(72, 'Password must be less than 72 characters');
+const nameSchema = z.string().trim().min(1, 'Please enter your full name').max(100);
 
 export default function Login() {
   const [searchParams] = useSearchParams();
