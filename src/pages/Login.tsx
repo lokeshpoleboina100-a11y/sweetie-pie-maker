@@ -35,24 +35,67 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
+    // ---- Client-side validation (prevents empty/invalid submissions) ----
+    const emailResult = emailSchema.safeParse(email);
+    if (!emailResult.success) {
+      toast({ title: 'Invalid email', description: emailResult.error.issues[0].message, variant: 'destructive' });
+      return;
+    }
+    const passwordResult = passwordSchema.safeParse(password);
+    if (!passwordResult.success) {
+      toast({ title: 'Invalid password', description: passwordResult.error.issues[0].message, variant: 'destructive' });
+      return;
+    }
+    if (mode === 'signup') {
+      const nameResult = nameSchema.safeParse(fullName);
+      if (!nameResult.success) {
+        toast({ title: 'Name required', description: nameResult.error.issues[0].message, variant: 'destructive' });
+        return;
+      }
+    }
+
+    setIsLoading(true);
     try {
       if (mode === 'signup') {
-        const { error } = await signUp(email, password, role, fullName);
+        const { error } = await signUp(emailResult.data, passwordResult.data, role, fullName.trim());
         if (error) {
+          // Duplicate email — surface a clear message and flip to login mode
+          // so the user can sign in with their existing account.
+          if (/already (exists|registered)/i.test(error.message) || /User already registered/i.test(error.message)) {
+            toast({
+              title: 'Account already exists',
+              description: 'An account with this email already exists. Please sign in instead.',
+            });
+            setMode('login');
+            setPassword('');
+            return;
+          }
           toast({ title: t('login.signup_failed'), description: error.message, variant: 'destructive' });
           return;
         }
         toast({ title: t('login.signup_success'), description: t('login.signup_desc') });
       } else {
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(emailResult.data, passwordResult.data);
         if (error) {
-          toast({ title: t('login.login_failed'), description: error.message, variant: 'destructive' });
+          // Map common Supabase auth errors to clearer copy.
+          let description = error.message;
+          if (/invalid login credentials/i.test(error.message)) {
+            description = 'Incorrect email or password. Please try again.';
+          } else if (/email not confirmed/i.test(error.message)) {
+            description = 'Please confirm your email before signing in. Check your inbox for the confirmation link.';
+          }
+          toast({ title: t('login.login_failed'), description, variant: 'destructive' });
           return;
         }
       }
       navigate(role === 'customer' ? '/customer' : '/worker');
+    } catch (err) {
+      toast({
+        title: 'Something went wrong',
+        description: err instanceof Error ? err.message : 'Please try again in a moment.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
