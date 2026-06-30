@@ -127,6 +127,15 @@ export default function JobDetails() {
           </div>
         </Card>
 
+        <Card className="p-4">
+          <p className="text-xs font-semibold text-muted-foreground mb-2">JOB STATUS</p>
+          <JobStatusControl
+            jobId={job.id}
+            status={job.status as any}
+            onChange={(s) => setJob({ ...job, status: s as any })}
+          />
+        </Card>
+
         {job.status === 'open' && (
           <AISmartMatch job={job} onChat={() => navigate(`/customer/chat/${job.id}`)} />
         )}
