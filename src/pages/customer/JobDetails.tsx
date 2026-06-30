@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
 import Milestones from '@/components/Milestones';
 import AISmartMatch from '@/components/AISmartMatch';
+import JobStatusControl from '@/components/JobStatusControl';
 
 type DbJob = Tables<'jobs'>;
 
