@@ -125,14 +125,14 @@ export default function WorkerHome() {
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredJobs.map((job, i) => (
+            {filteredJobs.map(({ job, distanceKm }, i) => (
               <motion.div
                 key={job.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
               >
-                <JobCard job={job} viewAs="worker" />
+                <JobCard job={job} viewAs="worker" distanceKm={distanceKm} />
               </motion.div>
             ))}
           </div>
