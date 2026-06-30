@@ -592,7 +592,14 @@ export type Database = {
         | "delivery"
         | "cleaning"
         | "freelance"
-      job_status: "open" | "in_progress" | "completed" | "cancelled"
+      job_status:
+        | "open"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+        | "paused"
+        | "closed"
+        | "filled"
       milestone_status:
         | "pending"
         | "in_progress"
@@ -742,7 +749,15 @@ export const Constants = {
         "cleaning",
         "freelance",
       ],
-      job_status: ["open", "in_progress", "completed", "cancelled"],
+      job_status: [
+        "open",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "paused",
+        "closed",
+        "filled",
+      ],
       milestone_status: [
         "pending",
         "in_progress",
