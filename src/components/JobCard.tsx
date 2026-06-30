@@ -1,8 +1,9 @@
-import { MapPin, Clock, Zap, Users } from 'lucide-react';
+import { MapPin, Zap, Users } from 'lucide-react';
 import { CATEGORY_ICONS, CATEGORY_LABELS } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import SaveJobButton from '@/components/SaveJobButton';
 import type { Tables } from '@/integrations/supabase/types';
 
 type DbJob = Tables<'jobs'>;
@@ -10,9 +11,10 @@ type DbJob = Tables<'jobs'>;
 interface JobCardProps {
   job: DbJob;
   viewAs: 'customer' | 'worker';
+  distanceKm?: number | null;
 }
 
-export default function JobCard({ job, viewAs }: JobCardProps) {
+export default function JobCard({ job, viewAs, distanceKm }: JobCardProps) {
   const navigate = useNavigate();
   const path = viewAs === 'worker' ? `/worker/job/${job.id}` : `/customer/job/${job.id}`;
   const budget = job.budget_max || job.budget_min || 0;
@@ -21,12 +23,17 @@ export default function JobCard({ job, viewAs }: JobCardProps) {
 
   return (
     <Card
-      className="p-4 cursor-pointer active:scale-[0.98] transition-transform"
+      className="p-4 cursor-pointer active:scale-[0.98] transition-transform relative"
       onClick={() => navigate(path)}
     >
-      <div className="flex items-start justify-between gap-3">
+      {viewAs === 'worker' && (
+        <div className="absolute top-3 right-3 z-10" onClick={(e) => e.stopPropagation()}>
+          <SaveJobButton jobId={job.id} />
+        </div>
+      )}
+      <div className="flex items-start justify-between gap-3 pr-8">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="text-lg">{CATEGORY_ICONS[categoryKey]}</span>
             <Badge variant="secondary" className="text-xs font-medium">
               {CATEGORY_LABELS[categoryKey]}
@@ -34,6 +41,11 @@ export default function JobCard({ job, viewAs }: JobCardProps) {
             {job.is_instant && (
               <Badge className="bg-accent text-accent-foreground text-xs gap-1">
                 <Zap className="h-3 w-3" /> Instant
+              </Badge>
+            )}
+            {distanceKm != null && (
+              <Badge variant="outline" className="text-xs gap-1">
+                <MapPin className="h-3 w-3" /> {distanceKm < 1 ? `${Math.round(distanceKm * 1000)}m` : `${distanceKm.toFixed(1)}km`}
               </Badge>
             )}
           </div>
