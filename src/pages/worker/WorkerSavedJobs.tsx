@@ -45,7 +45,7 @@ export default function WorkerSavedJobs() {
             <p className="text-xs mt-1">Tap the bookmark icon on any job to save it for later.</p>
           </div>
         ) : (
-          jobs.map((job) => <JobCard key={job.id} job={job as any} />)
+          jobs.map((job) => <JobCard key={job.id} job={job as any} viewAs="worker" />)
         )}
       </div>
       <BottomNav role="worker" />
