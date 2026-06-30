@@ -22,6 +22,7 @@ import WorkerEarnings from "./pages/worker/WorkerEarnings";
 import WorkerProfile from "./pages/worker/WorkerProfile";
 import WorkerSettings from "./pages/worker/WorkerSettings";
 import WorkerVerification from "./pages/worker/WorkerVerification";
+import WorkerSavedJobs from "./pages/worker/WorkerSavedJobs";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import EditProfile from "./pages/EditProfile";
 import AIHelpDesk from "./pages/AIHelpDesk";
@@ -65,6 +66,7 @@ const AppRoutes = () => (
     <Route path="/worker/profile" element={<ProtectedRoute><WorkerProfile /></ProtectedRoute>} />
     <Route path="/worker/settings" element={<ProtectedRoute><WorkerSettings /></ProtectedRoute>} />
     <Route path="/worker/verification" element={<ProtectedRoute><WorkerVerification /></ProtectedRoute>} />
+    <Route path="/worker/saved-jobs" element={<ProtectedRoute><WorkerSavedJobs /></ProtectedRoute>} />
     
     {/* Shared Routes */}
     <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />

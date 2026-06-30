@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { MapPin, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { MapPin, SlidersHorizontal, Loader2, Bookmark } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
@@ -41,9 +42,16 @@ export default function WorkerHome() {
         title={t('worker_home.nearby_jobs')}
         showNotifications
         right={
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <SlidersHorizontal className="h-5 w-5" />
-          </Button>
+          <>
+            <Link to="/worker/saved-jobs">
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Bookmark className="h-5 w-5" />
+              </Button>
+            </Link>
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <SlidersHorizontal className="h-5 w-5" />
+            </Button>
+          </>
         }
       />
 

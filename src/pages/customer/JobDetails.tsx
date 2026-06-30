@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
 import Milestones from '@/components/Milestones';
 import AISmartMatch from '@/components/AISmartMatch';
+import JobStatusControl from '@/components/JobStatusControl';
 
 type DbJob = Tables<'jobs'>;
 
@@ -125,6 +126,15 @@ export default function JobDetails() {
               <MapPin className="h-3.5 w-3.5" /> {job.location_name || 'Unknown'}
             </span>
           </div>
+        </Card>
+
+        <Card className="p-4">
+          <p className="text-xs font-semibold text-muted-foreground mb-2">JOB STATUS</p>
+          <JobStatusControl
+            jobId={job.id}
+            status={job.status as any}
+            onChange={(s) => setJob({ ...job, status: s as any })}
+          />
         </Card>
 
         {job.status === 'open' && (
