@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { MapPin, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { MapPin, SlidersHorizontal, Loader2, Bookmark } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
