@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { MapPin, SlidersHorizontal, Loader2, Bookmark } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -9,17 +9,28 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CATEGORY_ICONS, JobCategory } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import type { Tables } from '@/integrations/supabase/types';
 
 type DbJob = Tables<'jobs'>;
 const categories: JobCategory[] = ['repair', 'plumbing', 'electrical', 'painting', 'construction', 'delivery', 'cleaning', 'freelance'];
 
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
 export default function WorkerHome() {
   const { t } = useTranslation();
+  const { profile } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<JobCategory | null>(null);
   const [jobs, setJobs] = useState<DbJob[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortMode, setSortMode] = useState<'nearby' | 'recent'>('nearby');
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -34,7 +45,26 @@ export default function WorkerHome() {
     fetchJobs();
   }, []);
 
-  const filteredJobs = selectedCategory ? jobs.filter((j) => j.category === selectedCategory) : jobs;
+  const userLat = profile?.latitude;
+  const userLng = profile?.longitude;
+
+  const filteredJobs = useMemo(() => {
+    const base = selectedCategory ? jobs.filter((j) => j.category === selectedCategory) : jobs;
+    const withDist = base.map((j) => {
+      const d = userLat != null && userLng != null && j.latitude != null && j.longitude != null
+        ? haversineKm(userLat, userLng, j.latitude, j.longitude)
+        : null;
+      return { job: j, distanceKm: d };
+    });
+    if (sortMode === 'nearby' && userLat != null && userLng != null) {
+      withDist.sort((a, b) => {
+        if (a.distanceKm == null) return 1;
+        if (b.distanceKm == null) return -1;
+        return a.distanceKm - b.distanceKm;
+      });
+    }
+    return withDist;
+  }, [jobs, selectedCategory, sortMode, userLat, userLng]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
