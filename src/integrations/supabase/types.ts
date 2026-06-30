@@ -184,6 +184,7 @@ export type Database = {
           is_read: boolean | null
           job_id: string
           reactions: Json | null
+          read_at: string | null
           reply_to: string | null
           sender_id: string
           text: string
@@ -196,6 +197,7 @@ export type Database = {
           is_read?: boolean | null
           job_id: string
           reactions?: Json | null
+          read_at?: string | null
           reply_to?: string | null
           sender_id: string
           text: string
@@ -208,6 +210,7 @@ export type Database = {
           is_read?: boolean | null
           job_id?: string
           reactions?: Json | null
+          read_at?: string | null
           reply_to?: string | null
           sender_id?: string
           text?: string
@@ -435,6 +438,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "reviews_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_jobs: {
+        Row: {
+          created_at: string
+          id: string
+          job_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_jobs_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
