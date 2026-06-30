@@ -66,6 +66,7 @@ const AppRoutes = () => (
     <Route path="/worker/profile" element={<ProtectedRoute><WorkerProfile /></ProtectedRoute>} />
     <Route path="/worker/settings" element={<ProtectedRoute><WorkerSettings /></ProtectedRoute>} />
     <Route path="/worker/verification" element={<ProtectedRoute><WorkerVerification /></ProtectedRoute>} />
+    <Route path="/worker/saved-jobs" element={<ProtectedRoute><WorkerSavedJobs /></ProtectedRoute>} />
     
     {/* Shared Routes */}
     <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
