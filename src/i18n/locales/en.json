@@ -32,7 +32,8 @@
     "jobs": "Jobs",
     "my_jobs": "My Jobs",
     "earnings": "Earnings",
-    "status": "Status"
+    "status": "Status",
+    "saved": "Saved"
   },
   "customer_home": {
     "need_something": "Need something done?",
