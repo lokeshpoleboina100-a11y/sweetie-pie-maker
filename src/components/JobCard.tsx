@@ -83,6 +83,10 @@ export default function JobCard({ job, viewAs, distanceKm, showStatus }: JobCard
           {job.bid_count || 0} bids
         </span>
       </div>
+      <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">Tap card for full details</span>
+        <span className="text-xs font-semibold text-primary">View details →</span>
+      </div>
     </Card>
   );
 }

@@ -58,14 +58,14 @@ export default function WorkerMyJobs() {
               {activeJobs.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8 text-sm">No active jobs</p>
               ) : (
-                activeJobs.map((job) => <JobCard key={job.id} job={job} viewAs="worker" />)
+                activeJobs.map((job) => <JobCard key={job.id} job={job} viewAs="worker" showStatus />)
               )}
             </TabsContent>
             <TabsContent value="completed" className="space-y-3">
               {completedJobs.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8 text-sm">No completed jobs yet</p>
               ) : (
-                completedJobs.map((job) => <JobCard key={job.id} job={job} viewAs="worker" />)
+                completedJobs.map((job) => <JobCard key={job.id} job={job} viewAs="worker" showStatus />)
               )}
             </TabsContent>
           </Tabs>
