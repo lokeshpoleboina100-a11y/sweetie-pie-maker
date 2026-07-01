@@ -26,9 +26,6 @@ import WorkerSavedJobs from "./pages/worker/WorkerSavedJobs";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import EditProfile from "./pages/EditProfile";
 import AIHelpDesk from "./pages/AIHelpDesk";
-import PhoneLogin from "./pages/PhoneLogin";
-import EmailOtpLogin from "./pages/EmailOtpLogin";
-import OtpLogin from "./pages/OtpLogin";
 import Stories from "./pages/Stories";
 import NotFound from "./pages/NotFound";
 
@@ -45,9 +42,6 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Landing />} />
     <Route path="/login" element={<Login />} />
-    <Route path="/phone-login" element={<PhoneLogin />} />
-    <Route path="/email-otp" element={<EmailOtpLogin />} />
-    <Route path="/otp-login" element={<OtpLogin />} />
     
     {/* Customer Routes */}
     <Route path="/customer" element={<ProtectedRoute><CustomerHome /></ProtectedRoute>} />
