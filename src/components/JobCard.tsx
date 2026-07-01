@@ -12,9 +12,20 @@ interface JobCardProps {
   job: DbJob;
   viewAs: 'customer' | 'worker';
   distanceKm?: number | null;
+  showStatus?: boolean;
 }
 
-export default function JobCard({ job, viewAs, distanceKm }: JobCardProps) {
+const STATUS_LABEL: Record<string, string> = {
+  open: 'Open',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+  paused: 'Paused',
+  closed: 'Closed',
+  filled: 'Filled',
+};
+
+export default function JobCard({ job, viewAs, distanceKm, showStatus }: JobCardProps) {
   const navigate = useNavigate();
   const path = viewAs === 'worker' ? `/worker/job/${job.id}` : `/customer/job/${job.id}`;
   const budget = job.budget_max || job.budget_min || 0;
@@ -43,9 +54,14 @@ export default function JobCard({ job, viewAs, distanceKm }: JobCardProps) {
                 <Zap className="h-3 w-3" /> Instant
               </Badge>
             )}
-            {distanceKm != null && (
+            {distanceKm != null && job.latitude != null && job.longitude != null && (
               <Badge variant="outline" className="text-xs gap-1">
                 <MapPin className="h-3 w-3" /> {distanceKm < 1 ? `${Math.round(distanceKm * 1000)}m` : `${distanceKm.toFixed(1)}km`}
+              </Badge>
+            )}
+            {showStatus && (
+              <Badge variant="outline" className="text-xs capitalize">
+                {STATUS_LABEL[job.status as string] || job.status}
               </Badge>
             )}
           </div>
@@ -66,6 +82,10 @@ export default function JobCard({ job, viewAs, distanceKm }: JobCardProps) {
           <Users className="h-3.5 w-3.5" />
           {job.bid_count || 0} bids
         </span>
+      </div>
+      <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">Tap card for full details</span>
+        <span className="text-xs font-semibold text-primary">View details →</span>
       </div>
     </Card>
   );

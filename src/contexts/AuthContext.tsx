@@ -10,8 +10,7 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, password: string, role: 'customer' | 'worker', fullName: string) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInAsGuest: (role: 'customer' | 'worker', fullName?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -39,7 +38,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          // Use setTimeout to avoid deadlock with Supabase auth
           setTimeout(() => fetchProfile(session.user.id), 0);
         } else {
           setProfile(null);
@@ -60,29 +58,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, role: 'customer' | 'worker', fullName: string) => {
-    // Always set emailRedirectTo so confirmation links return to this app origin
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: { role, full_name: fullName },
-      },
+  const signInAsGuest = async (role: 'customer' | 'worker', fullName?: string) => {
+    const { error } = await supabase.auth.signInAnonymously({
+      options: { data: { role, full_name: fullName || 'Guest' } },
     });
-    // Supabase returns a "fake" user with empty identities array when the
-    // email is already registered (to prevent user enumeration). Detect that
-    // case and surface a clear duplicate-account error.
-    if (!error && data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-      return {
-        error: new Error('An account with this email already exists. Please sign in instead.'),
-      };
-    }
-    return { error: error as Error | null };
-  };
-
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error as Error | null };
   };
 
@@ -96,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signUp, signIn, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, signInAsGuest, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
