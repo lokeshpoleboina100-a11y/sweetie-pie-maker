@@ -82,7 +82,7 @@ const TESTIMONIALS = [
 ];
 
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
-const fadeUp  = { hidden: { opacity: 0, y: 28 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.2, 0.8, 0.2, 1] } } };
+const fadeUp  = { hidden: { opacity: 0, y: 28 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' as const } } };
 
 /* ─── HERO — 3D geometric floating shapes with mouse parallax ─── */
 function FloatingShapes({ mx, my }: { mx: any; my: any }) {
@@ -192,7 +192,7 @@ export default function Landing() {
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.2, 0.8, 0.2, 1] }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
           className="relative max-w-4xl"
         >
           <motion.div
