@@ -43,7 +43,40 @@ export default function WorkerHome() {
       setLoading(false);
     };
     fetchJobs();
+
+    // Realtime: keep the job feed in sync as customers post / edit / close jobs.
+    const channel = supabase
+      .channel('jobs-feed')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'jobs' },
+        (payload) => {
+          setJobs((prev) => {
+            if (payload.eventType === 'INSERT') {
+              const row = payload.new as DbJob;
+              if (row.status !== 'open') return prev;
+              if (prev.some((j) => j.id === row.id)) return prev;
+              return [row, ...prev];
+            }
+            if (payload.eventType === 'UPDATE') {
+              const row = payload.new as DbJob;
+              const rest = prev.filter((j) => j.id !== row.id);
+              return row.status === 'open' ? [row, ...rest] : rest;
+            }
+            if (payload.eventType === 'DELETE') {
+              return prev.filter((j) => j.id !== (payload.old as DbJob).id);
+            }
+            return prev;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
+
 
   const userLat = profile?.latitude;
   const userLng = profile?.longitude;
