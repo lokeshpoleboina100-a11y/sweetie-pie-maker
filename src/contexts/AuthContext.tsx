@@ -10,7 +10,14 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signInAsGuest: (role: 'customer' | 'worker', fullName?: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    role: 'customer' | 'worker'
+  ) => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -58,9 +65,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInAsGuest = async (role: 'customer' | 'worker', fullName?: string) => {
-    const { error } = await supabase.auth.signInAnonymously({
-      options: { data: { role, full_name: fullName || 'Guest' } },
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error as Error | null };
+  };
+
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    role: 'customer' | 'worker'
+  ) => {
+    const redirectUrl = `${window.location.origin}/`;
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: { full_name: fullName, role },
+      },
+    });
+    return { error: error as Error | null };
+  };
+
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
     });
     return { error: error as Error | null };
   };
@@ -75,7 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signInAsGuest, signOut, refreshProfile }}>
+    <AuthContext.Provider
+      value={{ session, user, profile, loading, signIn, signUp, resetPassword, signOut, refreshProfile }}
+    >
       {children}
     </AuthContext.Provider>
   );
