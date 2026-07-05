@@ -30,10 +30,10 @@ export default function AppHeader({ title, showBack, showNotifications = false, 
           <h1 className="text-lg font-bold truncate">{title}</h1>
         </div>
         <div className="flex items-center gap-1">
-          {user && <LocationBadge />}
           {children}
           <ThemeToggle />
           {right}
+          {user && <LocationBadge />}
           {showNotifications && (
             <Button variant="ghost" size="icon" className="h-9 w-9 relative">
               <Bell className="h-5 w-5" />
