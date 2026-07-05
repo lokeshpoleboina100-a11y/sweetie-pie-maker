@@ -16,7 +16,8 @@ export default function LocationBadge() {
   const [city, setCity] = useState('');
   const [open, setOpen] = useState(false);
 
-  const label = profile?.location_name || (detecting ? 'Detecting…' : 'Set location');
+  const hasLocation = !!profile?.location_name;
+  const label = profile?.location_name || (detecting ? 'Detecting…' : 'Enable location');
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -24,14 +25,17 @@ export default function LocationBadge() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-9 px-2 gap-1 text-xs font-semibold max-w-[140px]"
+          className="h-9 px-2 gap-1 text-xs font-semibold max-w-[140px] relative"
         >
           {detecting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <MapPin className="h-4 w-4 text-primary" />
+            <MapPin className={`h-4 w-4 ${hasLocation ? 'text-primary' : 'text-destructive'}`} />
           )}
           <span className="truncate">{label}</span>
+          {!hasLocation && !detecting && (
+            <span className="absolute top-1 right-1 h-2 w-2 bg-destructive rounded-full animate-pulse" />
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-72 space-y-3">
