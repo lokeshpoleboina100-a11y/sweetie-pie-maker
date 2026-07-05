@@ -24,6 +24,10 @@ Plus the older targeted tests:
 
 - `payments_status_pending_test.sql` — full status-flip rejection flow.
 - `payments_server_confirm_test.sql` — server-side confirmation succeeds.
+- `forbidden_updates_test.sql` — column-level write guards: workers
+  cannot change `bids.amount` / `bids.status`; customers cannot change
+  `jobs.accepted_worker_id` / `bid_count` / `escrow_balance`; non-owners
+  cannot UPDATE `chat-attachments` storage objects (owner can).
 
 Every test runs inside `BEGIN ... ROLLBACK`, so the database is never
 mutated.
