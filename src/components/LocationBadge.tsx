@@ -30,11 +30,11 @@ export default function LocationBadge() {
           {detecting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <MapPin className={`h-4 w-4 ${hasLocation ? 'text-primary' : 'text-orange-500'}`} />
+            <MapPin className={`h-4 w-4 ${hasLocation ? 'text-primary' : 'text-destructive'}`} />
           )}
           <span className="truncate">{label}</span>
           {!hasLocation && !detecting && (
-            <span className="absolute top-1 right-1 h-2 w-2 bg-orange-500 rounded-full animate-pulse" />
+            <span className="absolute top-1 right-1 h-2 w-2 bg-destructive rounded-full animate-pulse" />
           )}
         </Button>
       </PopoverTrigger>
