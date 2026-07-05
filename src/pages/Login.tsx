@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { lovable } from '@/integrations/lovable';
 
 type Mode = 'signin' | 'signup' | 'forgot';
 
@@ -196,6 +197,39 @@ export default function Login() {
             </Button>
           </motion.form>
         </AnimatePresence>
+
+        {mode !== 'forgot' && (
+          <>
+            <div className="flex items-center gap-3 my-5">
+              <div className="h-px flex-1 bg-white/20" />
+              <span className="text-xs text-white/60">OR</span>
+              <div className="h-px flex-1 bg-white/20" />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              disabled={loading}
+              onClick={async () => {
+                setLoading(true);
+                const result = await lovable.auth.signInWithOAuth('google', {
+                  redirect_uri: window.location.origin,
+                });
+                if (result.error) {
+                  toast({ title: 'Google sign-in failed', description: (result.error as Error).message, variant: 'destructive' });
+                  setLoading(false);
+                  return;
+                }
+                if (result.redirected) return;
+                navigate(role === 'worker' ? '/worker' : '/customer');
+              }}
+              className="w-full h-12 rounded-xl font-semibold bg-white/10 border-white/30 text-white hover:bg-white/20"
+            >
+              <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24"><path fill="#fff" d="M21.35 11.1H12v3.2h5.35c-.23 1.4-1.66 4.1-5.35 4.1-3.22 0-5.85-2.66-5.85-5.95S8.78 6.5 12 6.5c1.83 0 3.06.78 3.76 1.45l2.57-2.47C16.75 3.98 14.6 3 12 3 6.98 3 3 6.98 3 12s3.98 9 9 9c5.2 0 8.64-3.65 8.64-8.8 0-.6-.06-1.05-.15-1.5z"/></svg>
+              Continue with Google
+            </Button>
+          </>
+        )}
 
         <div className="mt-6 text-center text-sm text-white/80 space-y-2">
           {mode === 'signin' && (
