@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Sparkles } from 'lucide-react';
@@ -17,7 +17,7 @@ export default function Login() {
   const role = (searchParams.get('role') || 'customer') as 'customer' | 'worker';
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, signUp, resetPassword } = useAuth();
+  const { signIn, signUp, resetPassword, session, profile, loading: authLoading } = useAuth();
 
   const [mode, setMode] = useState<Mode>('signin');
   const [loading, setLoading] = useState(false);
@@ -25,6 +25,11 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+
+  useEffect(() => {
+    if (authLoading || !session) return;
+    navigate((profile?.role || role) === 'worker' ? '/worker' : '/customer', { replace: true });
+  }, [authLoading, navigate, profile?.role, role, session]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +41,7 @@ export default function Login() {
           toast({ title: 'Sign in failed', description: error.message, variant: 'destructive' });
           return;
         }
-        navigate(role === 'worker' ? '/worker' : '/customer');
+        navigate(role === 'worker' ? '/worker' : '/customer', { replace: true });
       } else if (mode === 'signup') {
         if (password !== confirm) {
           toast({ title: 'Passwords do not match', variant: 'destructive' });
@@ -220,8 +225,10 @@ export default function Login() {
               disabled={loading}
               onClick={async () => {
                 setLoading(true);
+                window.localStorage.setItem('nearwork-auth-role', role);
                 const result = await lovable.auth.signInWithOAuth('google', {
-                  redirect_uri: window.location.origin,
+                  redirect_uri: `${window.location.origin}/login?role=${role}`,
+                  extraParams: { prompt: 'select_account' },
                 });
                 if (result.error) {
                   toast({ title: 'Google sign-in failed', description: (result.error as Error).message, variant: 'destructive' });
@@ -229,7 +236,7 @@ export default function Login() {
                   return;
                 }
                 if (result.redirected) return;
-                navigate(role === 'worker' ? '/worker' : '/customer');
+                navigate(role === 'worker' ? '/worker' : '/customer', { replace: true });
               }}
               className="w-full h-12 rounded-xl font-semibold bg-white/10 border-white/30 text-white hover:bg-white/20"
             >

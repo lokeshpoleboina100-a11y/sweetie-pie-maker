@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle';
 import LocationBadge from '@/components/LocationBadge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/hooks/use-notifications';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface AppHeaderProps {
@@ -17,6 +19,16 @@ interface AppHeaderProps {
 export default function AppHeader({ title, showBack, showNotifications = false, right, children }: AppHeaderProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { requestPermission } = useNotifications();
+  const { toast } = useToast();
+
+  const enableNotifications = async () => {
+    const enabled = await requestPermission();
+    toast({
+      title: enabled ? 'Notifications enabled' : 'Notifications not enabled',
+      description: enabled ? 'You will receive updates for bids, messages, and jobs.' : 'You can enable notifications in your browser settings.',
+    });
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-lg border-b border-border">
@@ -35,7 +47,7 @@ export default function AppHeader({ title, showBack, showNotifications = false, 
           {right}
           {user && <LocationBadge />}
           {showNotifications && (
-            <Button variant="ghost" size="icon" className="h-9 w-9 relative">
+            <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={enableNotifications} aria-label="Enable notifications">
               <Bell className="h-5 w-5" />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-primary rounded-full" />
             </Button>
