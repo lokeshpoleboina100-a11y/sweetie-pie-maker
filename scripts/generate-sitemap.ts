@@ -2,7 +2,6 @@
 import { writeFileSync } from "fs";
 import { resolve } from "path";
 
-// TODO: update BASE_URL to your published domain (or custom domain) once live.
 const BASE_URL = "https://sweetie-pie-maker.lovable.app";
 
 interface SitemapEntry {
@@ -14,10 +13,12 @@ interface SitemapEntry {
 
 const today = new Date().toISOString().split("T")[0];
 
+// Only public, indexable routes. Authenticated routes (/customer, /worker,
+// /admin, /edit-profile, /ai-help, /stories) are excluded — they require
+// login and are also blocked in robots.txt.
 const entries: SitemapEntry[] = [
   { path: "/", lastmod: today, changefreq: "weekly", priority: "1.0" },
-  { path: "/login", lastmod: today, changefreq: "monthly", priority: "0.5" },
-  { path: "/phone-login", lastmod: today, changefreq: "monthly", priority: "0.4" },
+  { path: "/login", lastmod: today, changefreq: "monthly", priority: "0.6" },
 ];
 
 function generateSitemap(entries: SitemapEntry[]) {
