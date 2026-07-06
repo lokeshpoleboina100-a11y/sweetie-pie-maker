@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useEffect, useRef, useState } from 'react';
 import PremiumBackground from '@/components/PremiumBackground';
+import { SEO } from '@/components/SEO';
 
 const TYPING_ROLES = ['Developers', 'Designers', 'Writers', 'Marketers', 'App Builders'];
 
@@ -143,7 +144,55 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen relative overflow-hidden font-display text-white">
+      <SEO
+        title="NearWork — Hire Local Freelancers & Skilled Workers Near You"
+        description="Post a job in minutes and hire trusted local freelancers — developers, designers, writers, marketers and more. Real-time chat, secure escrow, verified reviews."
+        path="/"
+        keywords="freelance marketplace, hire freelancers, local workers, web developers, designers, gig work, hyperlocal jobs, escrow payments, post a job"
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebPage',
+            name: 'NearWork — Hire Local Freelancers & Skilled Workers Near You',
+            url: 'https://sweetie-pie-maker.lovable.app/',
+            description:
+              'Hyperlocal freelance marketplace to post jobs and hire skilled workers nearby with secure escrow and real-time chat.',
+            inLanguage: 'en',
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: [
+              {
+                '@type': 'Question',
+                name: 'How does NearWork work?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Post a job with your budget, review proposals from nearby freelancers, chat in real time, and pay securely through milestone escrow.',
+                },
+              },
+              {
+                '@type': 'Question',
+                name: 'Is NearWork free to use?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Posting jobs and browsing freelancers is free. A small platform commission is deducted from completed payments.',
+                },
+              },
+              {
+                '@type': 'Question',
+                name: 'How are payments protected?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Funds are held in escrow and only released to the worker when you approve each milestone, so both sides are protected.',
+                },
+              },
+            ],
+          },
+        ]}
+      />
       <PremiumBackground />
+
 
       {/* ─── GLASS NAV ─── */}
       <motion.nav
