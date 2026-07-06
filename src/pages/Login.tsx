@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { lovable } from '@/integrations/lovable';
+import { SEO } from '@/components/SEO';
 
 type Mode = 'signin' | 'signup' | 'forgot';
 
@@ -77,7 +78,14 @@ export default function Login() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden flex items-center justify-center px-4 py-10">
+      <SEO
+        title="Sign In or Sign Up | NearWork Freelance Marketplace"
+        description="Sign in or create a free NearWork account to post jobs, bid on gigs, and hire trusted local freelancers with secure escrow payments."
+        path="/login"
+        keywords="NearWork login, freelancer sign up, hire workers, join freelance marketplace"
+      />
       {/* Animated gradient background */}
+
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(120deg,#4c1d95,#1e3a8a,#3730a3,#5b21b6)] bg-[length:300%_300%] animate-[gradientShift_18s_ease_infinite]" />
       {/* Floating glow orbs */}
       <div className="absolute -z-10 top-[-10%] left-[-10%] h-[420px] w-[420px] rounded-full bg-fuchsia-500/30 blur-3xl animate-pulse" />
