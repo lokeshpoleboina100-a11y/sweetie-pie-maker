@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useEffect, useRef, useState } from 'react';
 import PremiumBackground from '@/components/PremiumBackground';
 import { SEO } from '@/components/SEO';
+import { useAuth } from '@/contexts/AuthContext';
 
 const TYPING_ROLES = ['Developers', 'Designers', 'Writers', 'Marketers', 'App Builders'];
 
@@ -113,7 +114,16 @@ function FloatingShapes({ mx, my }: { mx: any; my: any }) {
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { session, profile, loading } = useAuth();
   const typedRole = useTypingEffect(TYPING_ROLES);
+
+  useEffect(() => {
+    if (loading || !session) return;
+    const storedRole = window.localStorage.getItem('nearwork-auth-role');
+    const dashboard = (profile?.role || storedRole) === 'worker' ? '/worker' : '/customer';
+    window.localStorage.removeItem('nearwork-auth-role');
+    navigate(dashboard, { replace: true });
+  }, [loading, navigate, profile?.role, session]);
 
   // mouse parallax
   const mxRaw = useMotionValue(0.5);
@@ -199,7 +209,7 @@ export default function Landing() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(1100px,calc(100vw-24px))]"
+        className="fixed top-4 inset-x-3 z-50 mx-auto max-w-[1100px]"
       >
         <div className="glass-strong rounded-2xl px-4 md:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">

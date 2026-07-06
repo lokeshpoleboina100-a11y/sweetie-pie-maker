@@ -31,12 +31,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, user_id, full_name, role, avatar_url, bio, location_name, latitude, longitude, skills, experience_years, service_radius_km, is_verified, rating, total_reviews, total_jobs_completed, created_at, updated_at')
       .eq('user_id', userId)
       .single();
-    setProfile(data);
+
+    if (error || !data) {
+      setProfile(null);
+      return;
+    }
+
+    const { data: phone } = await supabase.rpc('get_own_phone');
+    setProfile({ ...data, phone: phone ?? null } as Profile);
   };
 
   useEffect(() => {
@@ -66,7 +73,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (data.session) {
+      setSession(data.session);
+      setUser(data.session.user);
+      await fetchProfile(data.session.user.id);
+    }
     return { error: error as Error | null };
   };
 
@@ -97,6 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setSession(null);
+    setUser(null);
     setProfile(null);
   };
 

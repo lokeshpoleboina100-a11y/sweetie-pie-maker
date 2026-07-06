@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -36,8 +36,7 @@ async function reverseGeocode(lat: number, lng: number): Promise<DetectedLocatio
 }
 
 /**
- * Prompt 1 location detection: auto-request geolocation on login, reverse-geocode,
- * persist to profiles (latitude/longitude/location_name). Falls back to manual entry.
+ * User-triggered location detection from the header location control.
  */
 export function useLocationDetect() {
   const { user, profile, refreshProfile } = useAuth();
@@ -120,15 +119,6 @@ export function useLocationDetect() {
     },
     [user, refreshProfile]
   );
-
-  // Auto-run once per session if the user has no saved location yet.
-  useEffect(() => {
-    if (!user || !profile) return;
-    if (profile.location_name) return;
-    if (detecting) return;
-    detect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, profile?.location_name]);
 
   return { detecting, error, needsManual, detect, setManual };
 }
