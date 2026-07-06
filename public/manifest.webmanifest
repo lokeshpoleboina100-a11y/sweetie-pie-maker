@@ -1,0 +1,17 @@
+{
+  "name": "NearWork — Find Jobs & Workers Near You",
+  "short_name": "NearWork",
+  "description": "Hyperlocal freelance marketplace to post jobs, hire skilled workers nearby, chat, and pay securely.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#6366f1",
+  "background_color": "#0f172a",
+  "lang": "en",
+  "categories": ["business", "productivity", "lifestyle"],
+  "icons": [
+    { "src": "/pwa-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/pwa-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
