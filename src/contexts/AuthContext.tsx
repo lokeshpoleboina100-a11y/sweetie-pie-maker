@@ -42,8 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const { data: phone } = await supabase.rpc('get_own_phone');
-    setProfile({ ...data, phone: phone ?? null } as Profile);
+    setProfile({ ...data, phone: null } as Profile);
   };
 
   useEffect(() => {
