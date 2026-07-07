@@ -184,7 +184,10 @@ export default function JobDetails() {
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold">{bid.worker_name}</h4>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <h4 className="font-bold truncate">{bid.worker_name}</h4>
+                      {bid.worker_verified && <VerifiedBadge showLabel={false} />}
+                    </div>
                     <span className="text-lg font-extrabold text-primary">₹{bid.amount}</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
