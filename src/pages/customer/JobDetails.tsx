@@ -58,7 +58,7 @@ export default function JobDetails() {
         const workerIds = bidsData.map((b) => b.worker_id);
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('user_id, full_name, rating, total_reviews')
+          .select('user_id, full_name, rating, total_reviews, is_verified')
           .in('user_id', workerIds);
 
         const profileMap = new Map(profiles?.map((p) => [p.user_id, p]) || []);
@@ -70,6 +70,7 @@ export default function JobDetails() {
               worker_name: p?.full_name || 'Worker',
               worker_rating: p?.rating ?? 0,
               worker_reviews: p?.total_reviews ?? 0,
+              worker_verified: p?.is_verified ?? false,
             };
           })
         );
