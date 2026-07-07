@@ -14,6 +14,7 @@ import type { Tables } from '@/integrations/supabase/types';
 import Milestones from '@/components/Milestones';
 import AISmartMatch from '@/components/AISmartMatch';
 import JobStatusControl from '@/components/JobStatusControl';
+import VerifiedBadge from '@/components/VerifiedBadge';
 
 type DbJob = Tables<'jobs'>;
 
