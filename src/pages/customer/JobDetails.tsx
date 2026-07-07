@@ -14,6 +14,7 @@ import type { Tables } from '@/integrations/supabase/types';
 import Milestones from '@/components/Milestones';
 import AISmartMatch from '@/components/AISmartMatch';
 import JobStatusControl from '@/components/JobStatusControl';
+import VerifiedBadge from '@/components/VerifiedBadge';
 
 type DbJob = Tables<'jobs'>;
 
@@ -28,6 +29,7 @@ interface BidWithProfile {
   worker_name: string;
   worker_rating: number | null;
   worker_reviews: number | null;
+  worker_verified: boolean;
 }
 
 export default function JobDetails() {
@@ -57,7 +59,7 @@ export default function JobDetails() {
         const workerIds = bidsData.map((b) => b.worker_id);
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('user_id, full_name, rating, total_reviews')
+          .select('user_id, full_name, rating, total_reviews, is_verified')
           .in('user_id', workerIds);
 
         const profileMap = new Map(profiles?.map((p) => [p.user_id, p]) || []);
@@ -69,6 +71,7 @@ export default function JobDetails() {
               worker_name: p?.full_name || 'Worker',
               worker_rating: p?.rating ?? 0,
               worker_reviews: p?.total_reviews ?? 0,
+              worker_verified: p?.is_verified ?? false,
             };
           })
         );
@@ -182,7 +185,10 @@ export default function JobDetails() {
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold">{bid.worker_name}</h4>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <h4 className="font-bold truncate">{bid.worker_name}</h4>
+                      {bid.worker_verified && <VerifiedBadge showLabel={false} />}
+                    </div>
                     <span className="text-lg font-extrabold text-primary">₹{bid.amount}</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
