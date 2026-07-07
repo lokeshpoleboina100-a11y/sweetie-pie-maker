@@ -1,4 +1,4 @@
-import { Star, MapPin, Shield, LogOut, ChevronRight } from 'lucide-react';
+import { Star, MapPin, LogOut, ChevronRight } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
 import { Card } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import AvatarUpload from '@/components/AvatarUpload';
+import VerifiedBadge from '@/components/VerifiedBadge';
 
 export default function WorkerProfile() {
   const { profile, signOut } = useAuth();
