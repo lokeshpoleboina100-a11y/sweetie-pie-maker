@@ -31,11 +31,7 @@ export default function WorkerProfile() {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-extrabold">{profile?.full_name || 'Worker'}</h2>
-              {profile?.is_verified && (
-                <Badge className="bg-green-100 text-green-700 gap-1">
-                  <Shield className="h-3 w-3" /> {t('profile.verified')}
-                </Badge>
-              )}
+              {profile?.is_verified && <VerifiedBadge />}
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
               <Star className="h-4 w-4 fill-warning text-warning" />
