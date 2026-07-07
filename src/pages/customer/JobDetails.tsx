@@ -28,6 +28,7 @@ interface BidWithProfile {
   worker_name: string;
   worker_rating: number | null;
   worker_reviews: number | null;
+  worker_verified: boolean;
 }
 
 export default function JobDetails() {
