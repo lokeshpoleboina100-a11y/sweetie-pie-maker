@@ -1,6 +1,35 @@
 export type UserRole = 'customer' | 'worker';
 
-export type JobCategory = 'repair' | 'construction' | 'delivery' | 'freelance' | 'cleaning' | 'plumbing' | 'electrical' | 'painting' | 'other';
+export type JobCategory =
+  | 'ac_repair'
+  | 'refrigerator_repair'
+  | 'washing_machine_repair'
+  | 'appliance_repair'
+  | 'plumbing'
+  | 'electrical'
+  | 'carpentry'
+  | 'painting'
+  | 'cleaning'
+  | 'other'
+  // legacy categories kept so existing jobs still render
+  | 'repair'
+  | 'construction'
+  | 'delivery'
+  | 'freelance';
+
+/** Categories offered to customers when posting a new service request. */
+export const ACTIVE_CATEGORIES: JobCategory[] = [
+  'ac_repair',
+  'refrigerator_repair',
+  'washing_machine_repair',
+  'appliance_repair',
+  'plumbing',
+  'electrical',
+  'carpentry',
+  'painting',
+  'cleaning',
+  'other',
+];
 
 export type JobStatus = 'open' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
 
