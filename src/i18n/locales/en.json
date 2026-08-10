@@ -98,6 +98,11 @@
     "delivery": "Delivery",
     "cleaning": "Cleaning",
     "freelance": "Freelance",
-    "other": "Other"
+    "other": "Other",
+    "ac_repair": "AC Repair",
+    "refrigerator_repair": "Refrigerator Repair",
+    "washing_machine_repair": "Washing Machine Repair",
+    "appliance_repair": "Appliance Repair",
+    "carpentry": "Carpentry"
   }
 }

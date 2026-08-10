@@ -1,6 +1,35 @@
 export type UserRole = 'customer' | 'worker';
 
-export type JobCategory = 'repair' | 'construction' | 'delivery' | 'freelance' | 'cleaning' | 'plumbing' | 'electrical' | 'painting' | 'other';
+export type JobCategory =
+  | 'ac_repair'
+  | 'refrigerator_repair'
+  | 'washing_machine_repair'
+  | 'appliance_repair'
+  | 'plumbing'
+  | 'electrical'
+  | 'carpentry'
+  | 'painting'
+  | 'cleaning'
+  | 'other'
+  // legacy categories kept so existing jobs still render
+  | 'repair'
+  | 'construction'
+  | 'delivery'
+  | 'freelance';
+
+/** Categories offered to customers when posting a new service request. */
+export const ACTIVE_CATEGORIES: JobCategory[] = [
+  'ac_repair',
+  'refrigerator_repair',
+  'washing_machine_repair',
+  'appliance_repair',
+  'plumbing',
+  'electrical',
+  'carpentry',
+  'painting',
+  'cleaning',
+  'other',
+];
 
 export type JobStatus = 'open' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
 
@@ -77,25 +106,35 @@ export interface Review {
 }
 
 export const CATEGORY_LABELS: Record<JobCategory, string> = {
+  ac_repair: 'AC Repair',
+  refrigerator_repair: 'Refrigerator Repair',
+  washing_machine_repair: 'Washing Machine Repair',
+  appliance_repair: 'Appliance Repair',
+  plumbing: 'Plumbing',
+  electrical: 'Electrical',
+  carpentry: 'Carpentry',
+  painting: 'Painting',
+  cleaning: 'Cleaning',
+  other: 'Other',
   repair: 'Repair',
   construction: 'Construction',
   delivery: 'Delivery',
   freelance: 'Freelance',
-  cleaning: 'Cleaning',
-  plumbing: 'Plumbing',
-  electrical: 'Electrical',
-  painting: 'Painting',
-  other: 'Other',
 };
 
 export const CATEGORY_ICONS: Record<JobCategory, string> = {
+  ac_repair: '❄️',
+  refrigerator_repair: '🧊',
+  washing_machine_repair: '🌀',
+  appliance_repair: '🔌',
+  plumbing: '🔩',
+  electrical: '⚡',
+  carpentry: '🪚',
+  painting: '🎨',
+  cleaning: '🧹',
+  other: '📋',
   repair: '🔧',
   construction: '🏗️',
   delivery: '🚚',
   freelance: '💼',
-  cleaning: '🧹',
-  plumbing: '🔩',
-  electrical: '⚡',
-  painting: '🎨',
-  other: '📋',
 };

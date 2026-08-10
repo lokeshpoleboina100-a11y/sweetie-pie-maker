@@ -12,7 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
 import Milestones from '@/components/Milestones';
-import AISmartMatch from '@/components/AISmartMatch';
+import AIWorkerRecommendations from '@/components/AIWorkerRecommendations';
+import AIBidRanking from '@/components/AIBidRanking';
 import JobStatusControl from '@/components/JobStatusControl';
 import VerifiedBadge from '@/components/VerifiedBadge';
 
@@ -141,7 +142,7 @@ export default function JobDetails() {
         </Card>
 
         {job.status === 'open' && (
-          <AISmartMatch job={job} onChat={() => navigate(`/customer/chat/${job.id}`)} />
+          <AIWorkerRecommendations jobId={job.id} onChat={() => navigate(`/customer/chat/${job.id}`)} />
         )}
 
         {(job.status === 'in_progress' || job.status === 'completed') && job.accepted_worker_id && (
@@ -161,6 +162,17 @@ export default function JobDetails() {
               <IndianRupee className="h-5 w-5" /> One-time payment
             </Button>
           </>
+        )}
+
+        {bids.length > 1 && (
+          <AIBidRanking
+            jobId={job.id}
+            canAccept={job.status === 'open'}
+            onAccept={(rb) => {
+              const match = bids.find((b) => b.id === rb.bid_id);
+              if (match) handleAccept(match);
+            }}
+          />
         )}
 
         <h3 className="font-bold text-base">{bids.length} Bids</h3>
