@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import type { Tables } from '@/integrations/supabase/types';
 
 type DbJob = Tables<'jobs'>;
-const categories: JobCategory[] = ['repair', 'plumbing', 'electrical', 'painting', 'construction', 'delivery', 'cleaning', 'freelance'];
+const categories: JobCategory[] = ['ac_repair', 'refrigerator_repair', 'washing_machine_repair', 'appliance_repair', 'plumbing', 'electrical', 'carpentry', 'painting', 'cleaning', 'other'];
 
 export default function CustomerHome() {
   const navigate = useNavigate();
