@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_predictions: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          id: string
+          job_id: string | null
+          model_name: string
+          model_version: string
+          prediction: Json
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          job_id?: string | null
+          model_name: string
+          model_version?: string
+          prediction: Json
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          job_id?: string | null
+          model_name?: string
+          model_version?: string
+          prediction?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_predictions_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bids: {
         Row: {
           amount: number
@@ -592,6 +630,12 @@ export type Database = {
         | "delivery"
         | "cleaning"
         | "freelance"
+        | "ac_repair"
+        | "refrigerator_repair"
+        | "washing_machine_repair"
+        | "carpentry"
+        | "appliance_repair"
+        | "other"
       job_status:
         | "open"
         | "in_progress"
@@ -748,6 +792,12 @@ export const Constants = {
         "delivery",
         "cleaning",
         "freelance",
+        "ac_repair",
+        "refrigerator_repair",
+        "washing_machine_repair",
+        "carpentry",
+        "appliance_repair",
+        "other",
       ],
       job_status: [
         "open",
