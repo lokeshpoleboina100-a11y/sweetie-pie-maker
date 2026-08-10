@@ -253,7 +253,7 @@ async function recommendWorkers(db: any, userId: string, payload: any) {
 
       return {
         worker_id: f.worker.user_id,
-        worker_name: f.worker.full_name,
+        worker_name: f.worker.full_name?.trim() || "Worker",
         distance_km: f.distance,
         rating: f.rating,
         total_reviews: f.worker.total_reviews ?? 0,
@@ -352,7 +352,7 @@ async function rankBids(db: any, userId: string, payload: any) {
       return {
         bid_id: r.bid.id,
         worker_id: r.bid.worker_id,
-        worker_name: r.profile?.full_name ?? "Worker",
+        worker_name: r.profile?.full_name?.trim() || "Worker",
         is_verified: !!r.profile?.is_verified,
         amount: r.bid.amount,
         rating: r.rating,
