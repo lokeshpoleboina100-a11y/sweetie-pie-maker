@@ -675,8 +675,14 @@ Deno.serve(async (req) => {
         return await recommendWorkers(db, user.id, payload);
       case "rank-bids":
         return await rankBids(db, user.id, payload);
+      case "classify-issue":
+        return await classifyIssue(db, user.id, payload);
+      case "estimate-job":
+        return await estimateJob(db, user.id, payload);
       default:
-        return err(400, "Unknown action", { supported: ["recommend-workers", "rank-bids"] });
+        return err(400, "Unknown action", {
+          supported: ["recommend-workers", "rank-bids", "classify-issue", "estimate-job"],
+        });
     }
   } catch (e) {
     console.error("ai-engine failure:", e);
