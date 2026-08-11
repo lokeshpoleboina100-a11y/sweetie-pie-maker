@@ -103,6 +103,14 @@ export default function PostJob() {
           <Textarea placeholder={t('post_job.description_placeholder')} className="min-h-[100px] rounded-xl" value={description} onChange={(e) => setDescription(e.target.value)} required />
         </div>
 
+        <AIJobAssistant
+          title={title}
+          description={description}
+          onApplyCategory={(c) => setCategory(c as DbJobCategory)}
+          onApplyBudget={(amount) => setBudget(String(amount))}
+        />
+
+
         <div className="space-y-2">
           <Label className="font-bold">{t('post_job.budget')}</Label>
           <Input type="number" placeholder="500" className="h-12 rounded-xl" value={budget} onChange={(e) => setBudget(e.target.value)} required />
