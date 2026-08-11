@@ -624,7 +624,7 @@ async function estimateJob(db: any, _userId: string, payload: any) {
     category,
     cost: {
       currency: "INR",
-      low: Math.round(costLow * urgencyMultiplier === costLow ? costLow : costLow),
+      low: Math.round(costLow),
       typical: Math.round(costTypical * urgencyMultiplier),
       high: Math.round(costHigh * urgencyMultiplier),
     },
