@@ -384,6 +384,274 @@ async function rankBids(db: any, userId: string, payload: any) {
   });
 }
 
+// ---------- NLP issue classification ----------
+
+const CATEGORIES = [
+  "ac_repair",
+  "refrigerator_repair",
+  "washing_machine_repair",
+  "appliance_repair",
+  "plumbing",
+  "electrical",
+  "carpentry",
+  "painting",
+  "cleaning",
+  "other",
+] as const;
+
+const KEYWORDS: Record<string, string[]> = {
+  ac_repair: ["ac", "air conditioner", "air-conditioner", "cooling", "split ac", "window ac", "gas refill", "compressor"],
+  refrigerator_repair: ["fridge", "refrigerator", "freezer", "deep freezer", "cooling coil"],
+  washing_machine_repair: ["washing machine", "washer", "dryer", "spin", "drum", "front load", "top load"],
+  appliance_repair: ["microwave", "oven", "geyser", "water heater", "mixer", "grinder", "dishwasher", "tv", "appliance"],
+  plumbing: ["tap", "faucet", "leak", "pipe", "drain", "blockage", "toilet", "flush", "sink", "water tank", "plumber"],
+  electrical: ["wiring", "short circuit", "switch", "socket", "mcb", "fuse", "fan", "light", "inverter", "electrician", "power"],
+  carpentry: ["door", "window frame", "furniture", "cupboard", "wardrobe", "hinge", "wood", "carpenter", "drawer"],
+  painting: ["paint", "painting", "whitewash", "putty", "primer", "wall colour", "wall color"],
+  cleaning: ["clean", "cleaning", "deep clean", "sanitize", "sweeping", "mopping", "pest", "sofa shampoo"],
+};
+
+const URGENCY_WORDS = ["urgent", "emergency", "immediately", "asap", "today", "right now", "not working at all", "flooding", "sparking", "burning smell"];
+
+/** Deterministic keyword fallback so classification always returns something usable. */
+function keywordClassify(text: string) {
+  const t = text.toLowerCase();
+  let best = "other";
+  let bestHits = 0;
+  const matched: string[] = [];
+  for (const [cat, words] of Object.entries(KEYWORDS)) {
+    const hits = words.filter((w) => t.includes(w));
+    if (hits.length > bestHits) {
+      best = cat;
+      bestHits = hits.length;
+      matched.length = 0;
+      matched.push(...hits);
+    }
+  }
+  const urgentHits = URGENCY_WORDS.filter((w) => t.includes(w));
+  return {
+    category: best,
+    confidence: bestHits === 0 ? 0.3 : Math.min(0.9, 0.5 + bestHits * 0.15),
+    urgency: urgentHits.length ? "high" : "normal",
+    keywords: matched,
+    method: "keyword" as const,
+  };
+}
+
+async function classifyIssue(db: any, _userId: string, payload: any) {
+  const title = String(payload?.title ?? "").slice(0, 300);
+  const description = String(payload?.description ?? "").slice(0, 2000);
+  const text = `${title}\n${description}`.trim();
+  if (text.length < 3) return err(400, "Please describe the problem first");
+
+  const fallback = keywordClassify(text);
+  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+
+  let result: Record<string, unknown> = fallback;
+
+  if (apiKey) {
+    try {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You classify home-service requests in India. Return the single best service category, an urgency level, a short clean summary of the problem, and 2-5 keywords that justify the choice. Be concise and literal.",
+            },
+            { role: "user", content: text },
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "classify",
+                description: "Return the service classification",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    category: { type: "string", enum: CATEGORIES },
+                    urgency: { type: "string", enum: ["low", "normal", "high"] },
+                    confidence: { type: "number", minimum: 0, maximum: 1 },
+                    summary: { type: "string" },
+                    keywords: { type: "array", items: { type: "string" } },
+                  },
+                  required: ["category", "urgency", "confidence", "summary", "keywords"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          ],
+          tool_choice: { type: "function", function: { name: "classify" } },
+        }),
+      });
+
+      if (res.status === 429) return err(429, "The AI service is busy. Please try again in a moment.");
+      if (res.status === 402) return err(402, "AI credits are exhausted. Please top up to continue using AI features.");
+      if (res.ok) {
+        const data = await res.json();
+        const args = data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+        if (args) {
+          const parsed = JSON.parse(args);
+          if (CATEGORIES.includes(parsed.category)) {
+            result = {
+              category: parsed.category,
+              urgency: ["low", "normal", "high"].includes(parsed.urgency) ? parsed.urgency : fallback.urgency,
+              confidence: Math.max(0, Math.min(1, Number(parsed.confidence) || 0.6)),
+              summary: String(parsed.summary ?? "").slice(0, 400),
+              keywords: Array.isArray(parsed.keywords) ? parsed.keywords.slice(0, 5).map(String) : fallback.keywords,
+              method: "llm",
+            };
+          }
+        }
+      } else {
+        console.error("classify gateway error", res.status, await res.text());
+      }
+    } catch (e) {
+      console.error("classify failed, using keyword fallback:", e);
+    }
+  }
+
+  await db.from("ai_predictions").insert({
+    job_id: payload?.job_id ?? null,
+    model_name: "issue_classifier",
+    model_version: "v1",
+    prediction: { input: { title, description }, ...result },
+    confidence: Number(result.confidence) || null,
+  });
+
+  return json({ model: { name: "issue_classifier", version: "v1" }, ...result });
+}
+
+// ---------- cost + duration prediction ----------
+
+function percentile(sorted: number[], p: number) {
+  if (sorted.length === 0) return null;
+  const idx = (sorted.length - 1) * p;
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  if (lo === hi) return sorted[lo];
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+
+/** Category priors in INR — used only when there is not enough live history. */
+const COST_PRIORS: Record<string, [number, number]> = {
+  ac_repair: [499, 2500],
+  refrigerator_repair: [399, 2200],
+  washing_machine_repair: [399, 2000],
+  appliance_repair: [299, 1800],
+  plumbing: [249, 1500],
+  electrical: [249, 1500],
+  carpentry: [349, 2500],
+  painting: [1500, 12000],
+  cleaning: [499, 3500],
+  other: [299, 2000],
+};
+
+/** Typical on-site hours per category, used when history is thin. */
+const DURATION_PRIORS: Record<string, [number, number]> = {
+  ac_repair: [1, 3],
+  refrigerator_repair: [1, 4],
+  washing_machine_repair: [1, 3],
+  appliance_repair: [1, 3],
+  plumbing: [1, 3],
+  electrical: [1, 3],
+  carpentry: [2, 6],
+  painting: [8, 24],
+  cleaning: [2, 6],
+  other: [1, 4],
+};
+
+async function estimateJob(db: any, _userId: string, payload: any) {
+  const category = String(payload?.category ?? payload?.service_category ?? "");
+  if (!CATEGORIES.includes(category as any)) return err(400, "A valid service category is required");
+
+  // Live history: accepted bids on completed jobs of this category.
+  const { data: histJobs } = await db
+    .from("jobs")
+    .select("id, category, status, accepted_worker_id, budget_min, budget_max, created_at, updated_at")
+    .eq("category", category)
+    .in("status", ["completed", "in_progress"])
+    .limit(500);
+
+  const jobIds = (histJobs ?? []).map((j: any) => j.id);
+  const [{ data: acceptedBids }, { data: pays }] = await Promise.all([
+    jobIds.length
+      ? db.from("bids").select("job_id, amount, estimated_time, status").in("job_id", jobIds).eq("status", "accepted")
+      : Promise.resolve({ data: [] as any[] }),
+    jobIds.length
+      ? db.from("payments").select("job_id, amount, status").in("job_id", jobIds).eq("status", "completed")
+      : Promise.resolve({ data: [] as any[] }),
+  ]);
+
+  const amounts: number[] = [
+    ...(pays ?? []).map((p: any) => Number(p.amount)),
+    ...(acceptedBids ?? []).map((b: any) => Number(b.amount)),
+  ].filter((n) => Number.isFinite(n) && n > 0);
+
+  // Duration in hours: completed jobs, posted -> completed.
+  const durations: number[] = (histJobs ?? [])
+    .filter((j: any) => j.status === "completed" && j.created_at && j.updated_at)
+    .map((j: any) => (new Date(j.updated_at).getTime() - new Date(j.created_at).getTime()) / 3_600_000)
+    .filter((h: number) => Number.isFinite(h) && h > 0 && h < 24 * 30);
+
+  amounts.sort((a, b) => a - b);
+  durations.sort((a, b) => a - b);
+
+  const enoughCost = amounts.length >= 5;
+  const enoughTime = durations.length >= 5;
+
+  const costLow = enoughCost ? Math.round(percentile(amounts, 0.25)!) : COST_PRIORS[category][0];
+  const costHigh = enoughCost ? Math.round(percentile(amounts, 0.75)!) : COST_PRIORS[category][1];
+  const costTypical = enoughCost
+    ? Math.round(percentile(amounts, 0.5)!)
+    : Math.round((COST_PRIORS[category][0] + COST_PRIORS[category][1]) / 2);
+
+  const timeLow = enoughTime ? round1(percentile(durations, 0.25)!) : DURATION_PRIORS[category][0];
+  const timeHigh = enoughTime ? round1(percentile(durations, 0.75)!) : DURATION_PRIORS[category][1];
+  const timeTypical = enoughTime
+    ? round1(percentile(durations, 0.5)!)
+    : round1((DURATION_PRIORS[category][0] + DURATION_PRIORS[category][1]) / 2);
+
+  // Urgency nudges the upper bound of the cost band (priority visits cost more).
+  const urgency = String(payload?.urgency ?? "normal");
+  const urgencyMultiplier = urgency === "high" ? 1.2 : 1;
+
+  const result = {
+    category,
+    cost: {
+      currency: "INR",
+      low: Math.round(costLow * urgencyMultiplier === costLow ? costLow : costLow),
+      typical: Math.round(costTypical * urgencyMultiplier),
+      high: Math.round(costHigh * urgencyMultiplier),
+    },
+    duration_hours: { low: timeLow, typical: timeTypical, high: timeHigh },
+    basis: {
+      cost_source: enoughCost ? "marketplace_history" : "category_baseline",
+      cost_samples: amounts.length,
+      duration_source: enoughTime ? "marketplace_history" : "category_baseline",
+      duration_samples: durations.length,
+      urgency,
+    },
+    confidence: round1(
+      (enoughCost ? 0.5 : 0.25) + (enoughTime ? 0.35 : 0.15) + (amounts.length > 25 ? 0.1 : 0),
+    ),
+  };
+
+  await db.from("ai_predictions").insert({
+    job_id: payload?.job_id ?? null,
+    model_name: "cost_duration_estimator",
+    model_version: "v1",
+    prediction: result,
+    confidence: result.confidence,
+  });
+
+  return json({ model: { name: "cost_duration_estimator", version: "v1" }, ...result });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return err(405, "Method not allowed");
