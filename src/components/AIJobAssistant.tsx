@@ -103,8 +103,89 @@ export default function AIJobAssistant({ title, description, onApplyCategory, on
           >
             Use this category
           </Button>
+
+          <Collapsible>
+            <CollapsibleTrigger className="group flex w-full items-center justify-between gap-2 rounded-xl border bg-background/60 px-3 py-2 text-xs font-semibold hover:bg-background">
+              <span className="flex items-center gap-1.5">
+                <Info className="h-3.5 w-3.5 text-primary" /> Why this category & urgency?
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 transition-transform group-data-[state=open]:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 space-y-3 rounded-xl border bg-background/60 p-3">
+              <div>
+                <div className="flex items-center justify-between text-[11px] font-semibold">
+                  <span>Classification confidence</span>
+                  <span>{Math.round(classification.confidence * 100)}%</span>
+                </div>
+                <Progress value={Math.round(classification.confidence * 100)} className="h-1.5 mt-1" />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {classification.method === 'llm'
+                    ? 'Detected by the AI language model reading your title and description.'
+                    : 'Detected by keyword matching (AI model unavailable), so double-check the category.'}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold">Signals used from your text</p>
+                {classification.keywords?.length ? (
+                  <div className="flex flex-wrap gap-1">
+                    {classification.keywords.map((k) => (
+                      <span
+                        key={`why-${k}`}
+                        className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20"
+                      >
+                        {k}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    No strong keywords found — add more detail for a sharper match.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold">
+                  Urgency: <span className="capitalize">{classification.urgency}</span>
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {classification.urgency === 'high'
+                    ? 'Your wording suggests an emergency or same-day need, so pricing leans toward the higher band.'
+                    : classification.urgency === 'low'
+                      ? 'Your wording suggests this can be scheduled later, which keeps the price band lower.'
+                      : 'No emergency wording found, so this is treated as a standard scheduled job.'}
+                </p>
+              </div>
+
+              {estimate && (
+                <div className="space-y-1 border-t pt-2">
+                  <p className="text-[11px] font-semibold">How the estimate was built</p>
+                  <ul className="text-[11px] text-muted-foreground space-y-0.5 list-disc pl-4">
+                    <li>
+                      Price:{' '}
+                      {estimate.basis.cost_source === 'marketplace_history'
+                        ? `${estimate.basis.cost_samples} similar accepted/paid jobs in ${
+                            CATEGORY_LABELS[estimate.category as JobCategory] ?? estimate.category
+                          }`
+                        : 'category baseline (not enough completed jobs yet)'}
+                    </li>
+                    <li>
+                      Duration:{' '}
+                      {estimate.basis.duration_source === 'marketplace_history'
+                        ? `${estimate.basis.duration_samples} past jobs`
+                        : 'category baseline'}
+                    </li>
+                    <li>Urgency multiplier applied: {estimate.basis.urgency}</li>
+                    <li>Estimate confidence: {Math.round(estimate.confidence * 100)}%</li>
+                  </ul>
+                </div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       )}
+
 
       {estimate && (
         <div className="grid grid-cols-2 gap-2 pt-1">
