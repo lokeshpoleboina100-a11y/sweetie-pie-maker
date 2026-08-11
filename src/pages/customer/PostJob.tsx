@@ -4,6 +4,7 @@ import { Camera } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LocationPicker from '@/components/LocationPicker';
 import AppHeader from '@/components/AppHeader';
+import AIJobAssistant from '@/components/AIJobAssistant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
