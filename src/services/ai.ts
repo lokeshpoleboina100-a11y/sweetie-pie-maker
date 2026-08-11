@@ -49,6 +49,7 @@ const FRIENDLY_ERRORS: Record<number, string> = {
   401: 'Please sign in again to use AI features.',
   403: 'You do not have access to this AI result.',
   404: 'This service request could not be found.',
+  402: 'AI credits are exhausted. Please add credits to continue using AI features.',
   429: 'The AI service is busy. Please try again in a moment.',
   500: 'The AI service is temporarily unavailable. Please try again.',
 };
@@ -85,4 +86,35 @@ export function rankBids(jobId: string) {
     ranked_bids: RankedBid[];
     message?: string;
   }>('rank-bids', { job_id: jobId });
+}
+
+export interface IssueClassification {
+  category: string;
+  urgency: 'low' | 'normal' | 'high';
+  confidence: number;
+  summary?: string;
+  keywords: string[];
+  method: 'llm' | 'keyword';
+}
+
+export interface JobEstimate {
+  category: string;
+  cost: { currency: string; low: number; typical: number; high: number };
+  duration_hours: { low: number; typical: number; high: number };
+  basis: {
+    cost_source: 'marketplace_history' | 'category_baseline';
+    cost_samples: number;
+    duration_source: 'marketplace_history' | 'category_baseline';
+    duration_samples: number;
+    urgency: string;
+  };
+  confidence: number;
+}
+
+export function classifyIssue(input: { title: string; description: string; job_id?: string }) {
+  return callAiEngine<IssueClassification>('classify-issue', input);
+}
+
+export function estimateJob(input: { category: string; urgency?: string; job_id?: string }) {
+  return callAiEngine<JobEstimate>('estimate-job', input);
 }
