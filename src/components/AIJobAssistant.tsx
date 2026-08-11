@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Sparkles, Loader2, Wand2, IndianRupee, Clock } from 'lucide-react';
+import { Sparkles, Loader2, Wand2, IndianRupee, Clock, ChevronDown, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 import { classifyIssue, estimateJob, type IssueClassification, type JobEstimate } from '@/services/ai';
 import { CATEGORY_ICONS, CATEGORY_LABELS, JobCategory } from '@/lib/types';
+
 
 interface Props {
   title: string;
