@@ -4,6 +4,7 @@ import { Camera } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LocationPicker from '@/components/LocationPicker';
 import AppHeader from '@/components/AppHeader';
+import AIJobAssistant from '@/components/AIJobAssistant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -102,6 +103,14 @@ export default function PostJob() {
           <Label className="font-bold">{t('post_job.description')}</Label>
           <Textarea placeholder={t('post_job.description_placeholder')} className="min-h-[100px] rounded-xl" value={description} onChange={(e) => setDescription(e.target.value)} required />
         </div>
+
+        <AIJobAssistant
+          title={title}
+          description={description}
+          onApplyCategory={(c) => setCategory(c as DbJobCategory)}
+          onApplyBudget={(amount) => setBudget(String(amount))}
+        />
+
 
         <div className="space-y-2">
           <Label className="font-bold">{t('post_job.budget')}</Label>
