@@ -147,6 +147,42 @@ export type Database = {
           },
         ]
       }
+      fraud_detection_settings: {
+        Row: {
+          auto_approve_low: boolean
+          auto_fail_high: boolean
+          created_at: string
+          enabled: boolean
+          id: boolean
+          low_max: number
+          medium_max: number
+          retention_days: number
+          updated_at: string
+        }
+        Insert: {
+          auto_approve_low?: boolean
+          auto_fail_high?: boolean
+          created_at?: string
+          enabled?: boolean
+          id?: boolean
+          low_max?: number
+          medium_max?: number
+          retention_days?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_approve_low?: boolean
+          auto_fail_high?: boolean
+          created_at?: string
+          enabled?: boolean
+          id?: boolean
+          low_max?: number
+          medium_max?: number
+          retention_days?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           accepted_worker_id: string | null
@@ -566,34 +602,105 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          detail: Json | null
+          document_id: string | null
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json | null
+          document_id?: string | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json | null
+          document_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_audit_log_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "verification_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verification_documents: {
         Row: {
           admin_notes: string | null
           created_at: string
+          document_authenticity_score: number | null
+          document_hash: string | null
           document_type: string
+          document_type_match: boolean | null
           document_url: string
+          duplicate_score: number | null
+          fraud_analysis_result: Json | null
+          fraud_analyzed_at: string | null
+          fraud_score: number | null
+          fraud_status: string
           id: string
+          ocr_confidence: number | null
+          risk_level: string | null
           status: string
+          storage_path: string | null
+          tampering_score: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
           admin_notes?: string | null
           created_at?: string
+          document_authenticity_score?: number | null
+          document_hash?: string | null
           document_type?: string
+          document_type_match?: boolean | null
           document_url: string
+          duplicate_score?: number | null
+          fraud_analysis_result?: Json | null
+          fraud_analyzed_at?: string | null
+          fraud_score?: number | null
+          fraud_status?: string
           id?: string
+          ocr_confidence?: number | null
+          risk_level?: string | null
           status?: string
+          storage_path?: string | null
+          tampering_score?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
           admin_notes?: string | null
           created_at?: string
+          document_authenticity_score?: number | null
+          document_hash?: string | null
           document_type?: string
+          document_type_match?: boolean | null
           document_url?: string
+          duplicate_score?: number | null
+          fraud_analysis_result?: Json | null
+          fraud_analyzed_at?: string | null
+          fraud_score?: number | null
+          fraud_status?: string
           id?: string
+          ocr_confidence?: number | null
+          risk_level?: string | null
           status?: string
+          storage_path?: string | null
+          tampering_score?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -609,6 +716,10 @@ export type Database = {
         Returns: boolean
       }
       get_own_phone: { Args: never; Returns: string }
+      get_verification_fraud_details: {
+        Args: { _doc_id: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
