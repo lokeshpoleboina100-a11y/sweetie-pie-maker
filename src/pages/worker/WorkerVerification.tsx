@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Upload, FileCheck, Clock, XCircle, Shield, Loader2 } from 'lucide-react';
+import { Upload, FileCheck, Clock, XCircle, Shield, Loader2, ScanSearch, AlertTriangle } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,14 +12,15 @@ import { toast } from 'sonner';
 interface VerificationDoc {
   id: string;
   document_type: string;
-  document_url: string;
   status: string;
   admin_notes: string | null;
   created_at: string;
 }
 
 const DOC_TYPES = [
-  { value: 'id_proof', label: 'Government ID (Aadhaar / PAN)' },
+  { value: 'aadhaar', label: 'Aadhaar Card' },
+  { value: 'pan', label: 'PAN Card' },
+  { value: 'driving_licence', label: 'Driving Licence' },
   { value: 'address_proof', label: 'Address Proof' },
   { value: 'skill_certificate', label: 'Skill Certificate' },
   { value: 'police_clearance', label: 'Police Clearance' },
@@ -31,12 +32,16 @@ const STATUS_CONFIG: Record<string, { icon: React.ElementType; color: string; la
   rejected: { icon: XCircle, color: 'text-destructive', label: 'Rejected' },
 };
 
+const SELECT_COLS = 'id, document_type, status, admin_notes, created_at';
+
 export default function WorkerVerification() {
   const { user, profile } = useAuth();
   const [docs, setDocs] = useState<VerificationDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [docType, setDocType] = useState('id_proof');
+  const [analyzing, setAnalyzing] = useState(false);
+  const [screenResult, setScreenResult] = useState<{ status: string; message: string } | null>(null);
+  const [docType, setDocType] = useState('aadhaar');
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -44,7 +49,7 @@ export default function WorkerVerification() {
     const fetchDocs = async () => {
       const { data } = await supabase
         .from('verification_documents')
-        .select('*')
+        .select(SELECT_COLS)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       setDocs((data as VerificationDoc[]) || []);
@@ -53,10 +58,25 @@ export default function WorkerVerification() {
     fetchDocs();
   }, [user]);
 
+  const refreshDocs = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('verification_documents')
+      .select(SELECT_COLS)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    setDocs((data as VerificationDoc[]) || []);
+  };
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File must be under 10MB');
+      return;
+    }
     setUploading(true);
+    setScreenResult(null);
 
     const ext = file.name.split('.').pop();
     const path = `${user.id}/${Date.now()}.${ext}`;
@@ -67,26 +87,51 @@ export default function WorkerVerification() {
       return;
     }
 
-    const { data: urlData } = supabase.storage.from('verification-docs').getPublicUrl(path);
+    const { data: doc, error } = await supabase
+      .from('verification_documents')
+      .insert({
+        user_id: user.id,
+        document_type: docType,
+        document_url: path,
+        storage_path: path,
+      })
+      .select(SELECT_COLS)
+      .single();
 
-    const { data: doc, error } = await supabase.from('verification_documents').insert({
-      user_id: user.id,
-      document_type: docType,
-      document_url: urlData.publicUrl,
-    }).select().single();
-
-    if (error) {
-      toast.error('Failed to save document');
-    } else {
-      setDocs((prev) => [doc as VerificationDoc, ...prev]);
-      toast.success('Document uploaded for verification');
-    }
     setUploading(false);
+
+    if (error || !doc) {
+      toast.error('Failed to save document');
+      return;
+    }
+
+    setDocs((prev) => [doc as VerificationDoc, ...prev]);
+    toast.success('Document uploaded — running AI security check');
+
+    // AI fraud screening
+    setAnalyzing(true);
+    const { data: result, error: fnError } = await supabase.functions.invoke('verification-analyze', {
+      body: { documentId: (doc as VerificationDoc).id },
+    });
+    setAnalyzing(false);
+
+    if (fnError) {
+      setScreenResult({
+        status: 'review',
+        message: 'We could not complete the automatic check. Our team will review your document manually.',
+      });
+    } else {
+      setScreenResult({
+        status: (result as any)?.status ?? 'review',
+        message: (result as any)?.message ?? 'Your document is under review.',
+      });
+    }
+    await refreshDocs();
     if (fileRef.current) fileRef.current.value = '';
   };
 
   const approvedCount = docs.filter((d) => d.status === 'approved').length;
-  const totalRequired = DOC_TYPES.length;
+  const totalRequired = 2;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -103,15 +148,15 @@ export default function WorkerVerification() {
               <h3 className="font-bold text-lg">Verification Status</h3>
               <p className="text-sm text-muted-foreground">
                 {profile?.is_verified
-                  ? '✅ Your profile is verified'
-                  : `${approvedCount}/${totalRequired} documents approved`}
+                  ? 'Your profile is verified'
+                  : `${Math.min(approvedCount, totalRequired)}/${totalRequired} documents approved`}
               </p>
             </div>
           </div>
           <div className="w-full bg-secondary rounded-full h-2">
             <div
               className="bg-primary h-2 rounded-full transition-all"
-              style={{ width: `${(approvedCount / totalRequired) * 100}%` }}
+              style={{ width: `${Math.min(100, (approvedCount / totalRequired) * 100)}%` }}
             />
           </div>
         </Card>
@@ -119,6 +164,10 @@ export default function WorkerVerification() {
         {/* Upload new document */}
         <Card className="p-5 space-y-4">
           <h4 className="font-bold">Upload Document</h4>
+          <p className="text-xs text-muted-foreground flex items-start gap-2">
+            <ScanSearch className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+            Every upload is screened by AI for tampering, readability and duplicates before an admin reviews it.
+          </p>
           <Select value={docType} onValueChange={setDocType}>
             <SelectTrigger>
               <SelectValue />
@@ -140,11 +189,30 @@ export default function WorkerVerification() {
           <Button
             className="w-full gap-2"
             onClick={() => fileRef.current?.click()}
-            disabled={uploading}
+            disabled={uploading || analyzing}
           >
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {uploading ? 'Uploading...' : 'Choose File & Upload'}
+            {uploading || analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            {uploading ? 'Uploading...' : analyzing ? 'Running AI security check...' : 'Choose File & Upload'}
           </Button>
+
+          {screenResult && (
+            <div
+              className={`rounded-lg border p-3 text-sm flex items-start gap-2 ${
+                screenResult.status === 'passed'
+                  ? 'border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400'
+                  : screenResult.status === 'failed'
+                    ? 'border-destructive/30 bg-destructive/10 text-destructive'
+                    : 'border-warning/30 bg-warning/10 text-warning'
+              }`}
+            >
+              {screenResult.status === 'passed' ? (
+                <FileCheck className="h-4 w-4 shrink-0 mt-0.5" />
+              ) : (
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+              )}
+              <span>{screenResult.message}</span>
+            </div>
+          )}
         </Card>
 
         {/* Submitted documents */}
