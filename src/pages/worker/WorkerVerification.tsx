@@ -41,6 +41,7 @@ export default function WorkerVerification() {
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [screenResult, setScreenResult] = useState<{ status: string; message: string } | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const [docType, setDocType] = useState('aadhaar');
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -68,67 +69,91 @@ export default function WorkerVerification() {
     setDocs((data as VerificationDoc[]) || []);
   };
 
+  const openPicker = () => {
+    if (uploading || analyzing) return;
+    const input = fileRef.current;
+    if (!input) return;
+    // Reset so re-selecting the same file still fires onChange
+    input.value = '';
+    input.click();
+  };
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
+    if (!user) {
+      toast.error('Please sign in to upload documents');
+      return;
+    }
     if (file.size > 10 * 1024 * 1024) {
       toast.error('File must be under 10MB');
+      if (fileRef.current) fileRef.current.value = '';
       return;
     }
-    setUploading(true);
+
+    setFileName(file.name);
     setScreenResult(null);
+    setUploading(true);
 
-    const ext = file.name.split('.').pop();
-    const path = `${user.id}/${Date.now()}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from('verification-docs').upload(path, file);
-    if (uploadError) {
-      toast.error('Upload failed');
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const path = `${user.id}/${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('verification-docs')
+        .upload(path, file, { contentType: file.type || undefined, upsert: false });
+      if (uploadError) {
+        toast.error(uploadError.message || 'Upload failed');
+        return;
+      }
+
+      const { data: doc, error } = await supabase
+        .from('verification_documents')
+        .insert({
+          user_id: user.id,
+          document_type: docType,
+          document_url: path,
+          storage_path: path,
+        })
+        .select(SELECT_COLS)
+        .single();
+
+      if (error || !doc) {
+        toast.error(error?.message || 'Failed to save document');
+        return;
+      }
+
+      setDocs((prev) => [doc as VerificationDoc, ...prev]);
+      toast.success('Document uploaded — running AI security check');
+
       setUploading(false);
-      return;
-    }
-
-    const { data: doc, error } = await supabase
-      .from('verification_documents')
-      .insert({
-        user_id: user.id,
-        document_type: docType,
-        document_url: path,
-        storage_path: path,
-      })
-      .select(SELECT_COLS)
-      .single();
-
-    setUploading(false);
-
-    if (error || !doc) {
-      toast.error('Failed to save document');
-      return;
-    }
-
-    setDocs((prev) => [doc as VerificationDoc, ...prev]);
-    toast.success('Document uploaded — running AI security check');
-
-    // AI fraud screening
-    setAnalyzing(true);
-    const { data: result, error: fnError } = await supabase.functions.invoke('verification-analyze', {
-      body: { documentId: (doc as VerificationDoc).id },
-    });
-    setAnalyzing(false);
-
-    if (fnError) {
-      setScreenResult({
-        status: 'review',
-        message: 'We could not complete the automatic check. Our team will review your document manually.',
+      setAnalyzing(true);
+      const { data: result, error: fnError } = await supabase.functions.invoke('verification-analyze', {
+        body: { documentId: (doc as VerificationDoc).id },
       });
-    } else {
-      setScreenResult({
-        status: (result as any)?.status ?? 'review',
-        message: (result as any)?.message ?? 'Your document is under review.',
-      });
+
+      setScreenResult(
+        fnError
+          ? {
+              status: 'review',
+              message: 'We could not complete the automatic check. Our team will review your document manually.',
+            }
+          : {
+              status: (result as any)?.status ?? 'review',
+              message: (result as any)?.message ?? 'Your document is under review.',
+            }
+      );
+      await refreshDocs();
+    } catch (err: any) {
+      toast.error(err?.message || 'Something went wrong while uploading');
+    } finally {
+      setUploading(false);
+      setAnalyzing(false);
+      setFileName(null);
+      if (fileRef.current) fileRef.current.value = '';
     }
-    await refreshDocs();
-    if (fileRef.current) fileRef.current.value = '';
   };
+
 
   const approvedCount = docs.filter((d) => d.status === 'approved').length;
   const totalRequired = 2;
@@ -182,18 +207,27 @@ export default function WorkerVerification() {
           <input
             type="file"
             ref={fileRef}
-            className="hidden"
-            accept="image/*,.pdf"
+            className="sr-only"
+            tabIndex={-1}
+            accept="image/*,application/pdf"
             onChange={handleUpload}
           />
           <Button
+            type="button"
             className="w-full gap-2"
-            onClick={() => fileRef.current?.click()}
+            onClick={openPicker}
             disabled={uploading || analyzing}
           >
             {uploading || analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             {uploading ? 'Uploading...' : analyzing ? 'Running AI security check...' : 'Choose File & Upload'}
           </Button>
+
+          {fileName && (uploading || analyzing) && (
+            <p className="text-xs text-muted-foreground truncate">
+              {uploading ? 'Uploading' : 'Screening'}: {fileName}
+            </p>
+          )}
+
 
           {screenResult && (
             <div
