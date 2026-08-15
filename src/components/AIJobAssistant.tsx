@@ -1,14 +1,48 @@
-import { useState } from 'react';
-import { Sparkles, Loader2, Wand2, IndianRupee, Clock, ChevronDown, Info } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  Sparkles,
+  Loader2,
+  Wand2,
+  IndianRupee,
+  Clock,
+  ChevronDown,
+  Info,
+  ThumbsUp,
+  ThumbsDown,
+  Download,
+  AlertCircle,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { classifyIssue, estimateJob, type IssueClassification, type JobEstimate } from '@/services/ai';
-import { CATEGORY_ICONS, CATEGORY_LABELS, JobCategory } from '@/lib/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { ACTIVE_CATEGORIES, CATEGORY_ICONS, CATEGORY_LABELS, JobCategory } from '@/lib/types';
 
+/** Serialisable snapshot of the AI reasoning, saved with the job and exportable. */
+export interface AiExplanation {
+  version: 1;
+  generated_at: string;
+  input: { title: string; description: string };
+  category: string;
+  category_label: string;
+  urgency: string;
+  confidence: number;
+  method: string;
+  keywords: string[];
+  summary?: string;
+  estimate?: JobEstimate | null;
+  feedback?: {
+    vote: 'up' | 'down' | 'wrong_category';
+    corrected_category?: string;
+    corrected_urgency?: string;
+  } | null;
+}
 
 interface Props {
   title: string;
@@ -17,6 +51,8 @@ interface Props {
   onApplyCategory: (category: string) => void;
   /** Called when the customer accepts the suggested typical price. */
   onApplyBudget?: (amount: number) => void;
+  /** Fires whenever the explanation changes so the parent can persist it with the job. */
+  onExplanationChange?: (explanation: AiExplanation | null) => void;
 }
 
 const URGENCY_STYLES: Record<string, string> = {
@@ -25,13 +61,65 @@ const URGENCY_STYLES: Record<string, string> = {
   low: 'bg-muted text-muted-foreground border-border',
 };
 
-export default function AIJobAssistant({ title, description, onApplyCategory, onApplyBudget }: Props) {
+const URGENCIES = ['low', 'normal', 'high'] as const;
+
+const money = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
+
+export default function AIJobAssistant({
+  title,
+  description,
+  onApplyCategory,
+  onApplyBudget,
+  onExplanationChange,
+}: Props) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [classification, setClassification] = useState<IssueClassification | null>(null);
   const [estimate, setEstimate] = useState<JobEstimate | null>(null);
+  const [vote, setVote] = useState<'up' | 'down' | 'wrong_category' | null>(null);
+  const [showCorrection, setShowCorrection] = useState(false);
+  const [fixCategory, setFixCategory] = useState<string>('');
+  const [fixUrgency, setFixUrgency] = useState<string>('');
+  const [savingFeedback, setSavingFeedback] = useState(false);
 
   const text = `${title} ${description}`.trim();
+
+  const buildExplanation = (
+    cls: IssueClassification | null,
+    est: JobEstimate | null,
+    fb: AiExplanation['feedback'] = null,
+  ): AiExplanation | null => {
+    if (!cls) return null;
+    return {
+      version: 1,
+      generated_at: new Date().toISOString(),
+      input: { title, description },
+      category: cls.category,
+      category_label: CATEGORY_LABELS[cls.category as JobCategory] ?? cls.category,
+      urgency: cls.urgency,
+      confidence: cls.confidence,
+      method: cls.method,
+      keywords: cls.keywords ?? [],
+      summary: cls.summary,
+      estimate: est,
+      feedback: fb,
+    };
+  };
+
+  // Keep the parent in sync so the explanation is stored on the job record.
+  useEffect(() => {
+    onExplanationChange?.(
+      buildExplanation(
+        classification,
+        estimate,
+        vote
+          ? { vote, corrected_category: fixCategory || undefined, corrected_urgency: fixUrgency || undefined }
+          : null,
+      ),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classification, estimate, vote, fixCategory, fixUrgency]);
 
   const analyse = async () => {
     if (text.length < 5) {
@@ -39,6 +127,10 @@ export default function AIJobAssistant({ title, description, onApplyCategory, on
       return;
     }
     setLoading(true);
+    setVote(null);
+    setShowCorrection(false);
+    setFixCategory('');
+    setFixUrgency('');
     try {
       const cls = await classifyIssue({ title, description });
       setClassification(cls);
@@ -50,6 +142,68 @@ export default function AIJobAssistant({ title, description, onApplyCategory, on
       setLoading(false);
     }
   };
+
+  const sendFeedback = async (
+    kind: 'up' | 'down' | 'wrong_category',
+    corrections?: { category?: string; urgency?: string },
+  ) => {
+    if (!classification) return;
+    setVote(kind);
+    setSavingFeedback(true);
+    try {
+      if (user) {
+        const { error } = await supabase.from('ai_feedback').insert({
+          user_id: user.id,
+          feature: 'job_classification',
+          vote: kind,
+          ai_category: classification.category,
+          ai_urgency: classification.urgency,
+          corrected_category: corrections?.category ?? null,
+          corrected_urgency: corrections?.urgency ?? null,
+          explanation: buildExplanation(classification, estimate) as any,
+        });
+        if (error) throw error;
+      }
+      if (corrections?.category) {
+        onApplyCategory(corrections.category);
+        setClassification({ ...classification, category: corrections.category });
+      }
+      if (corrections?.urgency) {
+        setClassification((prev) => (prev ? { ...prev, urgency: corrections.urgency as any } : prev));
+      }
+      toast({
+        title: 'Thanks for the feedback',
+        description:
+          kind === 'up'
+            ? 'Noted — this helps improve future matches.'
+            : 'We saved your correction and will use it to improve the model.',
+      });
+      setShowCorrection(false);
+    } catch (e: any) {
+      toast({ title: 'Could not save feedback', description: e.message, variant: 'destructive' });
+    } finally {
+      setSavingFeedback(false);
+    }
+  };
+
+  const exportExplanation = () => {
+    const payload = buildExplanation(
+      classification,
+      estimate,
+      vote ? { vote, corrected_category: fixCategory || undefined, corrected_urgency: fixUrgency || undefined } : null,
+    );
+    if (!payload) return;
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nearwork-ai-explanation-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: 'Explanation exported', description: 'A JSON audit summary was downloaded.' });
+  };
+
+  const inputs = estimate?.inputs;
 
   return (
     <Card className="p-4 space-y-3 border-primary/25 bg-primary/5 rounded-2xl">
@@ -181,11 +335,148 @@ export default function AIJobAssistant({ title, description, onApplyCategory, on
                   </ul>
                 </div>
               )}
+
+              {inputs && (
+                <div className="space-y-2 border-t pt-2">
+                  <p className="text-[11px] font-semibold">Estimate inputs (audit view)</p>
+
+                  <div className="rounded-lg border bg-muted/40 p-2 space-y-1">
+                    <p className="text-[11px] font-semibold">Price band</p>
+                    {inputs.cost.p50 !== null ? (
+                      <p className="text-[11px] text-muted-foreground">
+                        Percentiles from history — p25 {money(inputs.cost.p25!)}, p50 {money(inputs.cost.p50)}, p75{' '}
+                        {money(inputs.cost.p75!)}
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground">
+                        Default baseline used: {money(inputs.cost.baseline[0])} – {money(inputs.cost.baseline[1])}
+                      </p>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      Records used: {inputs.cost.records_used.completed_payments} completed payments,{' '}
+                      {inputs.cost.records_used.accepted_bids} accepted bids (minimum{' '}
+                      {inputs.cost.records_used.minimum_required} needed for history-based pricing)
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Urgency multiplier on the upper band: ×{inputs.urgency_multiplier}
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border bg-muted/40 p-2 space-y-1">
+                    <p className="text-[11px] font-semibold">Duration band</p>
+                    {inputs.duration_hours.p50 !== null ? (
+                      <p className="text-[11px] text-muted-foreground">
+                        Percentiles from history — p25 {inputs.duration_hours.p25}h, p50 {inputs.duration_hours.p50}h,
+                        p75 {inputs.duration_hours.p75}h
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground">
+                        Default baseline used: {inputs.duration_hours.baseline[0]}–{inputs.duration_hours.baseline[1]}{' '}
+                        hrs
+                      </p>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      Records used: {inputs.duration_hours.records_used.completed_jobs} completed jobs of{' '}
+                      {inputs.history_jobs_scanned} scanned (minimum{' '}
+                      {inputs.duration_hours.records_used.minimum_required} needed)
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Feedback controls */}
+              <div className="space-y-2 border-t pt-2">
+                <p className="text-[11px] font-semibold">Was this analysis correct?</p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={vote === 'up' ? 'default' : 'outline'}
+                    className="rounded-xl gap-1 h-8 text-[11px]"
+                    disabled={savingFeedback}
+                    onClick={() => sendFeedback('up')}
+                  >
+                    <ThumbsUp className="h-3 w-3" /> Looks right
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={vote === 'down' ? 'default' : 'outline'}
+                    className="rounded-xl gap-1 h-8 text-[11px]"
+                    disabled={savingFeedback}
+                    onClick={() => sendFeedback('down')}
+                  >
+                    <ThumbsDown className="h-3 w-3" /> Not helpful
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={showCorrection || vote === 'wrong_category' ? 'secondary' : 'outline'}
+                    className="rounded-xl gap-1 h-8 text-[11px]"
+                    onClick={() => setShowCorrection((s) => !s)}
+                  >
+                    <AlertCircle className="h-3 w-3" /> Wrong category
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl gap-1 h-8 text-[11px]"
+                    onClick={exportExplanation}
+                  >
+                    <Download className="h-3 w-3" /> Export explanation
+                  </Button>
+                </div>
+
+                {showCorrection && (
+                  <div className="space-y-2 rounded-lg border bg-muted/40 p-2">
+                    <p className="text-[11px] font-semibold">Pick the correct values</p>
+                    <Select value={fixCategory} onValueChange={setFixCategory}>
+                      <SelectTrigger className="h-9 text-xs rounded-lg">
+                        <SelectValue placeholder="Correct category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ACTIVE_CATEGORIES.map((c) => (
+                          <SelectItem key={c} value={c} className="text-xs">
+                            {CATEGORY_ICONS[c]} {CATEGORY_LABELS[c]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={fixUrgency} onValueChange={setFixUrgency}>
+                      <SelectTrigger className="h-9 text-xs rounded-lg">
+                        <SelectValue placeholder="Correct urgency (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {URGENCIES.map((u) => (
+                          <SelectItem key={u} value={u} className="text-xs capitalize">
+                            {u}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="w-full rounded-xl h-9 text-xs font-bold"
+                      disabled={savingFeedback || !fixCategory}
+                      onClick={() =>
+                        sendFeedback('wrong_category', {
+                          category: fixCategory,
+                          urgency: fixUrgency || undefined,
+                        })
+                      }
+                    >
+                      {savingFeedback ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+                      Submit correction & apply
+                    </Button>
+                  </div>
+                )}
+              </div>
             </CollapsibleContent>
           </Collapsible>
         </div>
       )}
-
 
       {estimate && (
         <div className="grid grid-cols-2 gap-2 pt-1">

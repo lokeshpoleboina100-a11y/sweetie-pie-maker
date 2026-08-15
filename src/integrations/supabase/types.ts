@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_feedback: {
+        Row: {
+          ai_category: string | null
+          ai_urgency: string | null
+          comment: string | null
+          corrected_category: string | null
+          corrected_urgency: string | null
+          created_at: string
+          explanation: Json | null
+          feature: string
+          id: string
+          job_id: string | null
+          user_id: string
+          vote: string | null
+        }
+        Insert: {
+          ai_category?: string | null
+          ai_urgency?: string | null
+          comment?: string | null
+          corrected_category?: string | null
+          corrected_urgency?: string | null
+          created_at?: string
+          explanation?: Json | null
+          feature?: string
+          id?: string
+          job_id?: string | null
+          user_id: string
+          vote?: string | null
+        }
+        Update: {
+          ai_category?: string | null
+          ai_urgency?: string | null
+          comment?: string | null
+          corrected_category?: string | null
+          corrected_urgency?: string | null
+          created_at?: string
+          explanation?: Json | null
+          feature?: string
+          id?: string
+          job_id?: string | null
+          user_id?: string
+          vote?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_feedback_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_predictions: {
         Row: {
           confidence: number | null
@@ -186,6 +239,7 @@ export type Database = {
       jobs: {
         Row: {
           accepted_worker_id: string | null
+          ai_explanation: Json | null
           bid_count: number | null
           budget_max: number | null
           budget_min: number | null
@@ -207,6 +261,7 @@ export type Database = {
         }
         Insert: {
           accepted_worker_id?: string | null
+          ai_explanation?: Json | null
           bid_count?: number | null
           budget_max?: number | null
           budget_min?: number | null
@@ -228,6 +283,7 @@ export type Database = {
         }
         Update: {
           accepted_worker_id?: string | null
+          ai_explanation?: Json | null
           bid_count?: number | null
           budget_max?: number | null
           budget_min?: number | null
