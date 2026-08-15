@@ -41,6 +41,7 @@ export default function WorkerVerification() {
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [screenResult, setScreenResult] = useState<{ status: string; message: string } | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const [docType, setDocType] = useState('aadhaar');
   const fileRef = useRef<HTMLInputElement>(null);
 
