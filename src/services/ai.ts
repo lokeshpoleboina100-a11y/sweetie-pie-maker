@@ -97,6 +97,25 @@ export interface IssueClassification {
   method: 'llm' | 'keyword';
 }
 
+export interface EstimateInputs {
+  cost: {
+    p25: number | null;
+    p50: number | null;
+    p75: number | null;
+    baseline: [number, number] | number[];
+    records_used: { completed_payments: number; accepted_bids: number; minimum_required: number };
+  };
+  duration_hours: {
+    p25: number | null;
+    p50: number | null;
+    p75: number | null;
+    baseline: [number, number] | number[];
+    records_used: { completed_jobs: number; minimum_required: number };
+  };
+  history_jobs_scanned: number;
+  urgency_multiplier: number;
+}
+
 export interface JobEstimate {
   category: string;
   cost: { currency: string; low: number; typical: number; high: number };
@@ -108,6 +127,7 @@ export interface JobEstimate {
     duration_samples: number;
     urgency: string;
   };
+  inputs?: EstimateInputs;
   confidence: number;
 }
 

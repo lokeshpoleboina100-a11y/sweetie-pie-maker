@@ -636,6 +636,31 @@ async function estimateJob(db: any, _userId: string, payload: any) {
       duration_samples: durations.length,
       urgency,
     },
+    inputs: {
+      cost: {
+        p25: enoughCost ? Math.round(percentile(amounts, 0.25)!) : null,
+        p50: enoughCost ? Math.round(percentile(amounts, 0.5)!) : null,
+        p75: enoughCost ? Math.round(percentile(amounts, 0.75)!) : null,
+        baseline: COST_PRIORS[category],
+        records_used: {
+          completed_payments: (pays ?? []).length,
+          accepted_bids: (acceptedBids ?? []).length,
+          minimum_required: 5,
+        },
+      },
+      duration_hours: {
+        p25: enoughTime ? round1(percentile(durations, 0.25)!) : null,
+        p50: enoughTime ? round1(percentile(durations, 0.5)!) : null,
+        p75: enoughTime ? round1(percentile(durations, 0.75)!) : null,
+        baseline: DURATION_PRIORS[category],
+        records_used: {
+          completed_jobs: durations.length,
+          minimum_required: 5,
+        },
+      },
+      history_jobs_scanned: (histJobs ?? []).length,
+      urgency_multiplier: urgencyMultiplier,
+    },
     confidence: round1(
       (enoughCost ? 0.5 : 0.25) + (enoughTime ? 0.35 : 0.15) + (amounts.length > 25 ? 0.1 : 0),
     ),
