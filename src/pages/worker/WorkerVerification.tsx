@@ -207,18 +207,27 @@ export default function WorkerVerification() {
           <input
             type="file"
             ref={fileRef}
-            className="hidden"
-            accept="image/*,.pdf"
+            className="sr-only"
+            tabIndex={-1}
+            accept="image/*,application/pdf"
             onChange={handleUpload}
           />
           <Button
+            type="button"
             className="w-full gap-2"
-            onClick={() => fileRef.current?.click()}
+            onClick={openPicker}
             disabled={uploading || analyzing}
           >
             {uploading || analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             {uploading ? 'Uploading...' : analyzing ? 'Running AI security check...' : 'Choose File & Upload'}
           </Button>
+
+          {fileName && (uploading || analyzing) && (
+            <p className="text-xs text-muted-foreground truncate">
+              {uploading ? 'Uploading' : 'Screening'}: {fileName}
+            </p>
+          )}
+
 
           {screenResult && (
             <div
