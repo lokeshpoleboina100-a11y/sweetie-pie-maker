@@ -136,8 +136,6 @@ export default function JobDetails() {
 
         <Card className="p-4">
           <p className="text-xs font-semibold text-muted-foreground mb-2">JOB STATUS</p>
-        <Card className="p-4">
-          <p className="text-xs font-semibold text-muted-foreground mb-2">JOB STATUS</p>
           <JobStatusControl
             jobId={job.id}
             status={job.status as any}
