@@ -16,6 +16,8 @@ import AIWorkerRecommendations from '@/components/AIWorkerRecommendations';
 import AIBidRanking from '@/components/AIBidRanking';
 import JobStatusControl from '@/components/JobStatusControl';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import AiExplanationCard from '@/components/AiExplanationCard';
+import type { AiExplanation } from '@/components/AIJobAssistant';
 
 type DbJob = Tables<'jobs'>;
 
@@ -140,6 +142,12 @@ export default function JobDetails() {
             onChange={(s) => setJob({ ...job, status: s as any })}
           />
         </Card>
+
+        {(job as any).ai_explanation && (
+          <AiExplanationCard explanation={(job as any).ai_explanation as AiExplanation} />
+        )}
+
+
 
         {job.status === 'open' && (
           <AIWorkerRecommendations jobId={job.id} onChat={() => navigate(`/customer/chat/${job.id}`)} />

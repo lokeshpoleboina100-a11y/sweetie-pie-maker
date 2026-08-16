@@ -4,7 +4,7 @@ import { Camera } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LocationPicker from '@/components/LocationPicker';
 import AppHeader from '@/components/AppHeader';
-import AIJobAssistant from '@/components/AIJobAssistant';
+import AIJobAssistant, { type AiExplanation } from '@/components/AIJobAssistant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -36,6 +36,7 @@ export default function PostJob() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [jobLat, setJobLat] = useState<number>(13.0827);
   const [jobLng, setJobLng] = useState<number>(80.2707);
+  const [aiExplanation, setAiExplanation] = useState<AiExplanation | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +57,7 @@ export default function PostJob() {
         location_name: locationName || 'Not set',
         latitude: jobLat,
         longitude: jobLng,
+        ai_explanation: (aiExplanation as any) ?? null,
       });
 
       if (error) throw error;
@@ -109,6 +111,7 @@ export default function PostJob() {
           description={description}
           onApplyCategory={(c) => setCategory(c as DbJobCategory)}
           onApplyBudget={(amount) => setBudget(String(amount))}
+          onExplanationChange={setAiExplanation}
         />
 
 

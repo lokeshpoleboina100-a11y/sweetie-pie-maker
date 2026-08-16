@@ -15,6 +15,8 @@ interface VerificationDoc {
   status: string;
   admin_notes: string | null;
   created_at: string;
+  fraud_status: string | null;
+  risk_level: string | null;
 }
 
 const DOC_TYPES = [
@@ -30,9 +32,32 @@ const STATUS_CONFIG: Record<string, { icon: React.ElementType; color: string; la
   pending: { icon: Clock, color: 'text-warning', label: 'Pending Review' },
   approved: { icon: FileCheck, color: 'text-green-600', label: 'Approved' },
   rejected: { icon: XCircle, color: 'text-destructive', label: 'Rejected' },
+  reupload_requested: { icon: AlertTriangle, color: 'text-warning', label: 'Re-upload Requested' },
 };
 
-const SELECT_COLS = 'id, document_type, status, admin_notes, created_at';
+/** Worker-safe wording for the AI screening outcome — never exposes internal signals. */
+const AI_CHECK_CONFIG: Record<string, { label: string; className: string }> = {
+  passed: {
+    label: 'AI check passed',
+    className: 'border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400',
+  },
+  review: { label: 'Manual review needed', className: 'border-warning/30 bg-warning/10 text-warning' },
+  duplicate_document: {
+    label: 'Manual review needed',
+    className: 'border-warning/30 bg-warning/10 text-warning',
+  },
+  failed: { label: 'AI check failed', className: 'border-destructive/30 bg-destructive/10 text-destructive' },
+  error: { label: 'Check incomplete', className: 'border-warning/30 bg-warning/10 text-warning' },
+  pending: { label: 'AI check queued', className: 'text-muted-foreground' },
+};
+
+const RISK_CONFIG: Record<string, string> = {
+  low: 'border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400',
+  medium: 'border-warning/30 bg-warning/10 text-warning',
+  high: 'border-destructive/30 bg-destructive/10 text-destructive',
+};
+
+const SELECT_COLS = 'id, document_type, status, admin_notes, created_at, fraud_status, risk_level';
 
 export default function WorkerVerification() {
   const { user, profile } = useAuth();
@@ -219,12 +244,12 @@ export default function WorkerVerification() {
             disabled={uploading || analyzing}
           >
             {uploading || analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {uploading ? 'Uploading...' : analyzing ? 'Running AI security check...' : 'Choose File & Upload'}
+            {uploading ? 'Uploading...' : analyzing ? 'Checking your document securely…' : 'Choose File & Upload'}
           </Button>
 
           {fileName && (uploading || analyzing) && (
             <p className="text-xs text-muted-foreground truncate">
-              {uploading ? 'Uploading' : 'Screening'}: {fileName}
+              {uploading ? 'Uploading' : 'Checking your document securely…'} {fileName}
             </p>
           )}
 
@@ -274,9 +299,28 @@ export default function WorkerVerification() {
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {new Date(doc.created_at).toLocaleDateString('en-IN')}
                       </p>
-                      {doc.admin_notes && doc.status === 'rejected' && (
+                      {doc.admin_notes && (doc.status === 'rejected' || doc.status === 'reupload_requested') && (
                         <p className="text-xs text-destructive mt-1">Note: {doc.admin_notes}</p>
                       )}
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        <Badge
+                          variant="outline"
+                          className={`gap-1 text-[10px] ${
+                            (AI_CHECK_CONFIG[doc.fraud_status || 'pending'] || AI_CHECK_CONFIG.pending).className
+                          }`}
+                        >
+                          <ScanSearch className="h-3 w-3" />
+                          {(AI_CHECK_CONFIG[doc.fraud_status || 'pending'] || AI_CHECK_CONFIG.pending).label}
+                        </Badge>
+                        {doc.risk_level && (
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] capitalize ${RISK_CONFIG[doc.risk_level] || ''}`}
+                          >
+                            Risk: {doc.risk_level}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <Badge variant="outline" className={`gap-1 ${cfg.color} shrink-0`}>
                       <Icon className="h-3 w-3" /> {cfg.label}
