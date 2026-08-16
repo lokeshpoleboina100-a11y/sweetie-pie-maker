@@ -15,6 +15,8 @@ interface VerificationDoc {
   status: string;
   admin_notes: string | null;
   created_at: string;
+  fraud_status: string | null;
+  risk_level: string | null;
 }
 
 const DOC_TYPES = [
@@ -30,9 +32,32 @@ const STATUS_CONFIG: Record<string, { icon: React.ElementType; color: string; la
   pending: { icon: Clock, color: 'text-warning', label: 'Pending Review' },
   approved: { icon: FileCheck, color: 'text-green-600', label: 'Approved' },
   rejected: { icon: XCircle, color: 'text-destructive', label: 'Rejected' },
+  reupload_requested: { icon: AlertTriangle, color: 'text-warning', label: 'Re-upload Requested' },
 };
 
-const SELECT_COLS = 'id, document_type, status, admin_notes, created_at';
+/** Worker-safe wording for the AI screening outcome — never exposes internal signals. */
+const AI_CHECK_CONFIG: Record<string, { label: string; className: string }> = {
+  passed: {
+    label: 'AI check passed',
+    className: 'border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400',
+  },
+  review: { label: 'Manual review needed', className: 'border-warning/30 bg-warning/10 text-warning' },
+  duplicate_document: {
+    label: 'Manual review needed',
+    className: 'border-warning/30 bg-warning/10 text-warning',
+  },
+  failed: { label: 'AI check failed', className: 'border-destructive/30 bg-destructive/10 text-destructive' },
+  error: { label: 'Check incomplete', className: 'border-warning/30 bg-warning/10 text-warning' },
+  pending: { label: 'AI check queued', className: 'text-muted-foreground' },
+};
+
+const RISK_CONFIG: Record<string, string> = {
+  low: 'border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400',
+  medium: 'border-warning/30 bg-warning/10 text-warning',
+  high: 'border-destructive/30 bg-destructive/10 text-destructive',
+};
+
+const SELECT_COLS = 'id, document_type, status, admin_notes, created_at, fraud_status, risk_level';
 
 export default function WorkerVerification() {
   const { user, profile } = useAuth();
