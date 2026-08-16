@@ -299,9 +299,28 @@ export default function WorkerVerification() {
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {new Date(doc.created_at).toLocaleDateString('en-IN')}
                       </p>
-                      {doc.admin_notes && doc.status === 'rejected' && (
+                      {doc.admin_notes && (doc.status === 'rejected' || doc.status === 'reupload_requested') && (
                         <p className="text-xs text-destructive mt-1">Note: {doc.admin_notes}</p>
                       )}
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        <Badge
+                          variant="outline"
+                          className={`gap-1 text-[10px] ${
+                            (AI_CHECK_CONFIG[doc.fraud_status || 'pending'] || AI_CHECK_CONFIG.pending).className
+                          }`}
+                        >
+                          <ScanSearch className="h-3 w-3" />
+                          {(AI_CHECK_CONFIG[doc.fraud_status || 'pending'] || AI_CHECK_CONFIG.pending).label}
+                        </Badge>
+                        {doc.risk_level && (
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] capitalize ${RISK_CONFIG[doc.risk_level] || ''}`}
+                          >
+                            Risk: {doc.risk_level}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <Badge variant="outline" className={`gap-1 ${cfg.color} shrink-0`}>
                       <Icon className="h-3 w-3" /> {cfg.label}
