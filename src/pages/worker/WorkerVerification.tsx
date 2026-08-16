@@ -244,12 +244,12 @@ export default function WorkerVerification() {
             disabled={uploading || analyzing}
           >
             {uploading || analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {uploading ? 'Uploading...' : analyzing ? 'Running AI security check...' : 'Choose File & Upload'}
+            {uploading ? 'Uploading...' : analyzing ? 'Checking your document securely…' : 'Choose File & Upload'}
           </Button>
 
           {fileName && (uploading || analyzing) && (
             <p className="text-xs text-muted-foreground truncate">
-              {uploading ? 'Uploading' : 'Screening'}: {fileName}
+              {uploading ? 'Uploading' : 'Checking your document securely…'} {fileName}
             </p>
           )}
 
