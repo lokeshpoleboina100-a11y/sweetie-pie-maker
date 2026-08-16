@@ -53,11 +53,12 @@ const pct = (v: number | null | undefined) =>
 export default function AdminVerification() {
   const [docs, setDocs] = useState<VerificationDoc[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'reupload_requested'>('pending');
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [updating, setUpdating] = useState<string | null>(null);
   const [details, setDetails] = useState<Record<string, FraudDetails | null>>({});
   const [loadingDetails, setLoadingDetails] = useState<string | null>(null);
+  const [names, setNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchDocs = async () => {
@@ -67,8 +68,27 @@ export default function AdminVerification() {
         .order('created_at', { ascending: false });
       if (filter !== 'all') query = query.eq('status', filter);
       const { data } = await query;
-      setDocs((data as VerificationDoc[]) || []);
+      const rows = (data as VerificationDoc[]) || [];
+      setDocs(rows);
       setLoading(false);
+
+      const userIds = [...new Set(rows.map((d) => d.user_id))];
+      if (userIds.length) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', userIds);
+        setNames(Object.fromEntries((profiles || []).map((p: any) => [p.user_id, p.full_name])));
+      }
+
+      // Pull the safe AI analysis summary for every listed document.
+      const results = await Promise.all(
+        rows.map(async (d) => {
+          const { data: fd } = await supabase.rpc('get_verification_fraud_details', { _doc_id: d.id });
+          return [d.id, (fd as unknown as FraudDetails) ?? null] as const;
+        }),
+      );
+      setDetails(Object.fromEntries(results));
     };
     fetchDocs();
   }, [filter]);
@@ -100,14 +120,24 @@ export default function AdminVerification() {
     setDetails((prev) => ({ ...prev, [docId]: data as unknown as FraudDetails }));
   };
 
-  const updateStatus = async (docId: string, status: 'approved' | 'rejected', userId: string) => {
+  const updateStatus = async (
+    docId: string,
+    status: 'approved' | 'rejected' | 'reupload_requested',
+    userId: string,
+  ) => {
     setUpdating(docId);
     const adminNotes = notes[docId] || '';
 
-    await supabase.from('verification_documents').update({
+    const { error } = await supabase.from('verification_documents').update({
       status,
       admin_notes: adminNotes,
     }).eq('id', docId);
+
+    if (error) {
+      setUpdating(null);
+      toast.error(error.message || 'Could not update document');
+      return;
+    }
 
     if (status === 'approved') {
       const { data: allDocs } = await supabase
@@ -122,7 +152,9 @@ export default function AdminVerification() {
 
     setDocs((prev) => prev.map((d) => d.id === docId ? { ...d, status, admin_notes: adminNotes } : d));
     setUpdating(null);
-    toast.success(`Document ${status}`);
+    toast.success(
+      status === 'reupload_requested' ? 'Re-upload requested from the worker' : `Document ${status}`,
+    );
   };
 
   return (
