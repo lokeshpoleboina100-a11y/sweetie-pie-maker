@@ -302,7 +302,7 @@ export default function AdminVerification() {
                       className="text-sm"
                       rows={2}
                     />
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         size="sm"
                         className="gap-1"
@@ -311,6 +311,15 @@ export default function AdminVerification() {
                       >
                         {updating === doc.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
                         Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="gap-1"
+                        onClick={() => updateStatus(doc.id, 'reupload_requested', doc.user_id)}
+                        disabled={updating === doc.id}
+                      >
+                        Request re-upload
                       </Button>
                       <Button
                         size="sm"
