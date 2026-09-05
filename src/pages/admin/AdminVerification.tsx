@@ -195,8 +195,16 @@ export default function AdminVerification() {
                   <div>
                     <p className="font-bold">{DOC_LABELS[doc.document_type] || doc.document_type}</p>
                     <p className="text-xs text-muted-foreground">
-                      User: {doc.user_id.slice(0, 8)}… | {new Date(doc.created_at).toLocaleDateString('en-IN')}
+                      {names[doc.user_id] || `User ${doc.user_id.slice(0, 8)}…`} · {new Date(doc.created_at).toLocaleDateString('en-IN')}
                     </p>
+                    {fd && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <Badge variant="outline" className={RISK_STYLES[fd.risk_level || ''] || ''}>
+                          {fd.risk_level ?? 'unknown'} risk
+                        </Badge>
+                        <Badge variant="outline">{fd.fraud_status}</Badge>
+                      </div>
+                    )}
                   </div>
                   <Badge variant={doc.status === 'approved' ? 'default' : doc.status === 'rejected' ? 'destructive' : 'secondary'}>
                     {doc.status}
