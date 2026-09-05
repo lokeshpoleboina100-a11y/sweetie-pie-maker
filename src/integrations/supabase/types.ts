@@ -255,6 +255,7 @@ export type Database = {
           latitude: number | null
           location_name: string | null
           longitude: number | null
+          service: string | null
           status: Database["public"]["Enums"]["job_status"]
           title: string
           updated_at: string
@@ -277,6 +278,7 @@ export type Database = {
           latitude?: number | null
           location_name?: string | null
           longitude?: number | null
+          service?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           title: string
           updated_at?: string
@@ -299,6 +301,7 @@ export type Database = {
           latitude?: number | null
           location_name?: string | null
           longitude?: number | null
+          service?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           title?: string
           updated_at?: string
@@ -483,10 +486,12 @@ export type Database = {
           latitude: number | null
           location_name: string | null
           longitude: number | null
+          main_category: string | null
           phone: string | null
           rating: number | null
           role: Database["public"]["Enums"]["user_role"]
           service_radius_km: number | null
+          services: string[] | null
           skills: Database["public"]["Enums"]["job_category"][] | null
           total_jobs_completed: number | null
           total_reviews: number | null
@@ -504,10 +509,12 @@ export type Database = {
           latitude?: number | null
           location_name?: string | null
           longitude?: number | null
+          main_category?: string | null
           phone?: string | null
           rating?: number | null
           role?: Database["public"]["Enums"]["user_role"]
           service_radius_km?: number | null
+          services?: string[] | null
           skills?: Database["public"]["Enums"]["job_category"][] | null
           total_jobs_completed?: number | null
           total_reviews?: number | null
@@ -525,10 +532,12 @@ export type Database = {
           latitude?: number | null
           location_name?: string | null
           longitude?: number | null
+          main_category?: string | null
           phone?: string | null
           rating?: number | null
           role?: Database["public"]["Enums"]["user_role"]
           service_radius_km?: number | null
+          services?: string[] | null
           skills?: Database["public"]["Enums"]["job_category"][] | null
           total_jobs_completed?: number | null
           total_reviews?: number | null
@@ -803,6 +812,16 @@ export type Database = {
         | "carpentry"
         | "appliance_repair"
         | "other"
+        | "home_services"
+        | "automotive"
+        | "technology"
+        | "education"
+        | "beauty_wellness"
+        | "moving_delivery"
+        | "gardening_outdoor"
+        | "pet_services"
+        | "events_creative"
+        | "professional_services"
       job_status:
         | "open"
         | "in_progress"
@@ -965,6 +984,16 @@ export const Constants = {
         "carpentry",
         "appliance_repair",
         "other",
+        "home_services",
+        "automotive",
+        "technology",
+        "education",
+        "beauty_wellness",
+        "moving_delivery",
+        "gardening_outdoor",
+        "pet_services",
+        "events_creative",
+        "professional_services",
       ],
       job_status: [
         "open",
