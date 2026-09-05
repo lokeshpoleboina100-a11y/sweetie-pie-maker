@@ -165,8 +165,8 @@ export default function AdminVerification() {
         </h2>
       </div>
 
-      <div className="flex gap-2">
-        {(['pending', 'approved', 'rejected', 'all'] as const).map((f) => (
+      <div className="flex flex-wrap gap-2">
+        {(['pending', 'approved', 'rejected', 'reupload_requested', 'all'] as const).map((f) => (
           <Button
             key={f}
             variant={filter === f ? 'default' : 'outline'}
@@ -174,7 +174,7 @@ export default function AdminVerification() {
             onClick={() => { setFilter(f); setLoading(true); }}
             className="capitalize"
           >
-            {f}
+            {f === 'reupload_requested' ? 'Re-upload' : f}
           </Button>
         ))}
       </div>
@@ -195,8 +195,16 @@ export default function AdminVerification() {
                   <div>
                     <p className="font-bold">{DOC_LABELS[doc.document_type] || doc.document_type}</p>
                     <p className="text-xs text-muted-foreground">
-                      User: {doc.user_id.slice(0, 8)}… | {new Date(doc.created_at).toLocaleDateString('en-IN')}
+                      {names[doc.user_id] || `User ${doc.user_id.slice(0, 8)}…`} · {new Date(doc.created_at).toLocaleDateString('en-IN')}
                     </p>
+                    {fd && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <Badge variant="outline" className={RISK_STYLES[fd.risk_level || ''] || ''}>
+                          {fd.risk_level ?? 'unknown'} risk
+                        </Badge>
+                        <Badge variant="outline">{fd.fraud_status}</Badge>
+                      </div>
+                    )}
                   </div>
                   <Badge variant={doc.status === 'approved' ? 'default' : doc.status === 'rejected' ? 'destructive' : 'secondary'}>
                     {doc.status}
@@ -294,7 +302,7 @@ export default function AdminVerification() {
                       className="text-sm"
                       rows={2}
                     />
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         size="sm"
                         className="gap-1"
@@ -303,6 +311,15 @@ export default function AdminVerification() {
                       >
                         {updating === doc.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
                         Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="gap-1"
+                        onClick={() => updateStatus(doc.id, 'reupload_requested', doc.user_id)}
+                        disabled={updating === doc.id}
+                      >
+                        Request re-upload
                       </Button>
                       <Button
                         size="sm"
