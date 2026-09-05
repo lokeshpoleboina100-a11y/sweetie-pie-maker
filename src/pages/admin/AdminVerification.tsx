@@ -165,8 +165,8 @@ export default function AdminVerification() {
         </h2>
       </div>
 
-      <div className="flex gap-2">
-        {(['pending', 'approved', 'rejected', 'all'] as const).map((f) => (
+      <div className="flex flex-wrap gap-2">
+        {(['pending', 'approved', 'rejected', 'reupload_requested', 'all'] as const).map((f) => (
           <Button
             key={f}
             variant={filter === f ? 'default' : 'outline'}
@@ -174,7 +174,7 @@ export default function AdminVerification() {
             onClick={() => { setFilter(f); setLoading(true); }}
             className="capitalize"
           >
-            {f}
+            {f === 'reupload_requested' ? 'Re-upload' : f}
           </Button>
         ))}
       </div>
