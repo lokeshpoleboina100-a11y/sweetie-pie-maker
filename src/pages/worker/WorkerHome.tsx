@@ -7,14 +7,14 @@ import BottomNav from '@/components/BottomNav';
 import JobCard from '@/components/JobCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CATEGORY_ICONS, JobCategory } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { CATEGORY_GROUPS, getGroup, type DbJobCategory } from '@/lib/serviceCatalog';
 import type { Tables } from '@/integrations/supabase/types';
 
 type DbJob = Tables<'jobs'>;
-const categories: JobCategory[] = ['ac_repair', 'refrigerator_repair', 'washing_machine_repair', 'appliance_repair', 'plumbing', 'electrical', 'carpentry', 'painting', 'cleaning', 'other'];
+
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371;
