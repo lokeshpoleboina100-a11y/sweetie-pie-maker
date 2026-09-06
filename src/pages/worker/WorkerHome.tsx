@@ -27,7 +27,7 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
 export default function WorkerHome() {
   const { t } = useTranslation();
   const { profile } = useAuth();
-  const [selectedCategory, setSelectedCategory] = useState<JobCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<DbJobCategory | null>(null);
   const [jobs, setJobs] = useState<DbJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortMode, setSortMode] = useState<'nearby' | 'recent'>('nearby');
@@ -82,7 +82,7 @@ export default function WorkerHome() {
   const userLng = profile?.longitude;
 
   const filteredJobs = useMemo(() => {
-    const base = selectedCategory ? jobs.filter((j) => j.category === selectedCategory) : jobs;
+    const base = selectedCategory ? jobs.filter((j) => getGroup(j.category)?.id === selectedCategory) : jobs;
     const withDist = base.map((j) => {
       const d = userLat != null && userLng != null && j.latitude != null && j.longitude != null
         ? haversineKm(userLat, userLng, j.latitude, j.longitude)
@@ -133,14 +133,14 @@ export default function WorkerHome() {
           >
             {t('worker_home.all')}
           </Badge>
-          {categories.map((cat) => (
+          {CATEGORY_GROUPS.map((group) => (
             <Badge
-              key={cat}
-              variant={selectedCategory === cat ? 'default' : 'secondary'}
+              key={group.id}
+              variant={selectedCategory === group.id ? 'default' : 'secondary'}
               className="cursor-pointer shrink-0 h-9 px-4 text-sm font-semibold rounded-xl gap-1.5"
-              onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
+              onClick={() => setSelectedCategory(group.id === selectedCategory ? null : group.id)}
             >
-              {CATEGORY_ICONS[cat]} {t(`categories.${cat}`)}
+              {group.icon} {group.name}
             </Badge>
           ))}
         </div>
