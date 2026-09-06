@@ -27,6 +27,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import EditProfile from "./pages/EditProfile";
 import AIHelpDesk from "./pages/AIHelpDesk";
 import Stories from "./pages/Stories";
+import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,8 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Landing />} />
     <Route path="/login" element={<Login />} />
+    <Route path="/categories" element={<Categories />} />
+    <Route path="/categories/:groupId" element={<Categories />} />
     
     {/* Customer Routes */}
     <Route path="/customer" element={<ProtectedRoute><CustomerHome /></ProtectedRoute>} />
