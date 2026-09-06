@@ -1,26 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
 import JobCard from '@/components/JobCard';
+import CategoryGrid from '@/components/CategoryGrid';
+import ServiceSearch from '@/components/ServiceSearch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CATEGORY_ICONS, JobCategory } from '@/lib/types';
+import { CATEGORY_GROUPS, getGroup, type DbJobCategory } from '@/lib/serviceCatalog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import type { Tables } from '@/integrations/supabase/types';
 
 type DbJob = Tables<'jobs'>;
-const categories: JobCategory[] = ['ac_repair', 'refrigerator_repair', 'washing_machine_repair', 'appliance_repair', 'plumbing', 'electrical', 'carpentry', 'painting', 'cleaning', 'other'];
 
 export default function CustomerHome() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { t } = useTranslation();
-  const [selectedCategory, setSelectedCategory] = useState<JobCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<DbJobCategory | null>(null);
   const [jobs, setJobs] = useState<DbJob[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +40,7 @@ export default function CustomerHome() {
   }, [user]);
 
   const filteredJobs = selectedCategory
-    ? jobs.filter((j) => j.category === selectedCategory)
+    ? jobs.filter((j) => getGroup(j.category)?.id === selectedCategory)
     : jobs;
 
   return (
@@ -47,10 +48,7 @@ export default function CustomerHome() {
       <AppHeader title={t('app_name')} showNotifications />
 
       <div className="max-w-lg mx-auto px-4 py-4">
-        <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
-          <MapPin className="h-4 w-4 text-primary" />
-          <span className="font-medium">Anna Nagar, Chennai</span>
-        </div>
+        <ServiceSearch />
 
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -68,6 +66,8 @@ export default function CustomerHome() {
           </Button>
         </motion.div>
 
+        <CategoryGrid limit={6} />
+
         <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-4 px-4 scrollbar-hide">
           <Badge
             variant={selectedCategory === null ? 'default' : 'secondary'}
@@ -76,14 +76,14 @@ export default function CustomerHome() {
           >
             {t('customer_home.all')}
           </Badge>
-          {categories.map((cat) => (
+          {CATEGORY_GROUPS.map((group) => (
             <Badge
-              key={cat}
-              variant={selectedCategory === cat ? 'default' : 'secondary'}
+              key={group.id}
+              variant={selectedCategory === group.id ? 'default' : 'secondary'}
               className="cursor-pointer shrink-0 h-9 px-4 text-sm font-semibold rounded-xl gap-1.5"
-              onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
+              onClick={() => setSelectedCategory(group.id === selectedCategory ? null : group.id)}
             >
-              {CATEGORY_ICONS[cat]} {t(`categories.${cat}`)}
+              {group.icon} {group.name}
             </Badge>
           ))}
         </div>
@@ -108,7 +108,13 @@ export default function CustomerHome() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
               >
-                <JobCard job={job} viewAs="customer" />
+                <JobCard
+                  job={job}
+                  viewAs="customer"
+                  showStatus
+                  allowDelete
+                  onDeleted={(id) => setJobs((prev) => prev.filter((j) => j.id !== id))}
+                />
               </motion.div>
             ))}
           </div>
