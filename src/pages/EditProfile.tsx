@@ -13,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { locationData } from '@/lib/location-data';
 import AvatarUpload from '@/components/AvatarUpload';
 import AppHeader from '@/components/AppHeader';
+import { Badge } from '@/components/ui/badge';
+import { CATEGORY_GROUPS, getGroup, type DbJobCategory } from '@/lib/serviceCatalog';
 import LocationPicker from '@/components/LocationPicker';
 
 export default function EditProfile() {
@@ -28,12 +30,23 @@ export default function EditProfile() {
   const [state, setState] = useState('');
   const [district, setDistrict] = useState('');
   const [saving, setSaving] = useState(false);
+  const [mainCategory, setMainCategory] = useState<DbJobCategory | ''>('');
+  const [services, setServices] = useState<string[]>([]);
+  const [experience, setExperience] = useState('');
+  const [radius, setRadius] = useState('');
+
+  const isWorker = profile?.role === 'worker';
+  const activeGroup = getGroup(mainCategory);
 
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || '');
       setPhone(profile.phone || '');
       setBio(profile.bio || '');
+      setMainCategory((profile.main_category as DbJobCategory) || '');
+      setServices(profile.services || []);
+      setExperience(profile.experience_years != null ? String(profile.experience_years) : '');
+      setRadius(profile.service_radius_km != null ? String(profile.service_radius_km) : '');
       // Parse location_name to extract state/district if stored
       const loc = profile.location_name || '';
       const parts = loc.split(', ');
@@ -63,6 +76,15 @@ export default function EditProfile() {
         phone,
         bio,
         location_name: locationName,
+        ...(isWorker
+          ? {
+              main_category: mainCategory || null,
+              services,
+              skills: services,
+              experience_years: experience ? parseInt(experience) : null,
+              service_radius_km: radius ? parseInt(radius) : null,
+            }
+          : {}),
       })
       .eq('user_id', user.id);
 
@@ -103,6 +125,55 @@ export default function EditProfile() {
           <Label>{t('edit_profile.bio', 'Bio')}</Label>
           <Textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} className="rounded-xl" placeholder={t('edit_profile.bio_placeholder', 'Tell us about yourself...')} />
         </div>
+
+        {isWorker && (
+          <div className="space-y-4 p-4 rounded-2xl border border-border">
+            <div className="space-y-1.5">
+              <Label>Main category</Label>
+              <Select value={mainCategory} onValueChange={(v) => { setMainCategory(v as DbJobCategory); setServices([]); }}>
+                <SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Select your main category" /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORY_GROUPS.map(g => (
+                    <SelectItem key={g.id} value={g.id}>{g.icon} {g.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {activeGroup && (
+              <div className="space-y-1.5">
+                <Label>Services you offer</Label>
+                <div className="flex flex-wrap gap-2">
+                  {activeGroup.services.map(svc => {
+                    const on = services.includes(svc.name);
+                    return (
+                      <Badge
+                        key={svc.slug}
+                        variant={on ? 'default' : 'secondary'}
+                        className="cursor-pointer h-9 px-3 rounded-xl text-sm font-medium"
+                        onClick={() => setServices(prev => on ? prev.filter(x => x !== svc.name) : [...prev, svc.name])}
+                      >
+                        {svc.name}
+                      </Badge>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">Tap to select the services you can take on.</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Experience (years)</Label>
+                <Input type="number" min="0" value={experience} onChange={e => setExperience(e.target.value)} className="h-12 rounded-xl" placeholder="3" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Service radius (km)</Label>
+                <Input type="number" min="1" value={radius} onChange={e => setRadius(e.target.value)} className="h-12 rounded-xl" placeholder="10" />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Location: Country → State → District */}
         <div className="space-y-1.5">

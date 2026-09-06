@@ -1,9 +1,10 @@
-import { MapPin, Zap, Users } from 'lucide-react';
-import { CATEGORY_ICONS, CATEGORY_LABELS } from '@/lib/types';
+import { MapPin, Zap, Users, Calendar } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import SaveJobButton from '@/components/SaveJobButton';
+import DeleteJobButton from '@/components/DeleteJobButton';
+import { describeJobCategory } from '@/lib/serviceCatalog';
 import type { Tables } from '@/integrations/supabase/types';
 
 type DbJob = Tables<'jobs'>;
@@ -13,6 +14,9 @@ interface JobCardProps {
   viewAs: 'customer' | 'worker';
   distanceKm?: number | null;
   showStatus?: boolean;
+  /** Show a delete control (customer's own jobs only). */
+  allowDelete?: boolean;
+  onDeleted?: (jobId: string) => void;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -25,30 +29,34 @@ const STATUS_LABEL: Record<string, string> = {
   filled: 'Filled',
 };
 
-export default function JobCard({ job, viewAs, distanceKm, showStatus }: JobCardProps) {
+export default function JobCard({ job, viewAs, distanceKm, showStatus, allowDelete, onDeleted }: JobCardProps) {
   const navigate = useNavigate();
   const path = viewAs === 'worker' ? `/worker/job/${job.id}` : `/customer/job/${job.id}`;
   const budget = job.budget_max || job.budget_min || 0;
   const budgetType = job.is_negotiable ? 'negotiable' : 'fixed';
-  const categoryKey = job.category as keyof typeof CATEGORY_ICONS;
+  const { icon, group, service } = describeJobCategory(job.category, job.service);
 
   return (
     <Card
       className="p-4 cursor-pointer active:scale-[0.98] transition-transform relative"
       onClick={() => navigate(path)}
     >
-      {viewAs === 'worker' && (
-        <div className="absolute top-3 right-3 z-10" onClick={(e) => e.stopPropagation()}>
-          <SaveJobButton jobId={job.id} />
-        </div>
-      )}
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        {viewAs === 'worker' && <SaveJobButton jobId={job.id} />}
+        {allowDelete && <DeleteJobButton job={job} onDeleted={onDeleted} />}
+      </div>
       <div className="flex items-start justify-between gap-3 pr-8">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="text-lg">{CATEGORY_ICONS[categoryKey]}</span>
+            <span className="text-lg">{icon}</span>
             <Badge variant="secondary" className="text-xs font-medium">
-              {CATEGORY_LABELS[categoryKey]}
+              {group}
             </Badge>
+            {service && (
+              <Badge variant="outline" className="text-xs font-medium">
+                {service}
+              </Badge>
+            )}
             {job.is_instant && (
               <Badge className="bg-accent text-accent-foreground text-xs gap-1">
                 <Zap className="h-3 w-3" /> Instant
@@ -73,10 +81,14 @@ export default function JobCard({ job, viewAs, distanceKm, showStatus }: JobCard
           <p className="text-[10px] text-muted-foreground uppercase font-semibold">{budgetType}</p>
         </div>
       </div>
-      <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+      <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
         <span className="flex items-center gap-1">
           <MapPin className="h-3.5 w-3.5" />
           {job.location_name || 'Unknown'}
+        </span>
+        <span className="flex items-center gap-1">
+          <Calendar className="h-3.5 w-3.5" />
+          {new Date(job.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
         </span>
         <span className="flex items-center gap-1 ml-auto">
           <Users className="h-3.5 w-3.5" />

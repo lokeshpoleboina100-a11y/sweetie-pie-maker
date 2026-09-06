@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Camera } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LocationPicker from '@/components/LocationPicker';
@@ -11,24 +11,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { CATEGORY_ICONS, JobCategory } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
-import type { Database } from '@/integrations/supabase/types';
-
-type DbJobCategory = Database['public']['Enums']['job_category'];
-const categories: DbJobCategory[] = ['ac_repair', 'refrigerator_repair', 'washing_machine_repair', 'appliance_repair', 'plumbing', 'electrical', 'carpentry', 'painting', 'cleaning', 'other'];
+import { CATEGORY_GROUPS, getGroup, type DbJobCategory } from '@/lib/serviceCatalog';
 
 export default function PostJob() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const [params] = useSearchParams();
   const [isInstant, setIsInstant] = useState(false);
   const [isNegotiable, setIsNegotiable] = useState(true);
   const [category, setCategory] = useState<DbJobCategory | ''>('');
+  const [service, setService] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [budget, setBudget] = useState('');
@@ -37,6 +35,18 @@ export default function PostJob() {
   const [jobLat, setJobLat] = useState<number>(13.0827);
   const [jobLng, setJobLng] = useState<number>(80.2707);
   const [aiExplanation, setAiExplanation] = useState<AiExplanation | null>(null);
+
+  // Pre-fill from the category / service the customer picked before landing here.
+  useEffect(() => {
+    const group = getGroup(params.get('category'));
+    if (group) {
+      setCategory(group.id);
+      const svc = params.get('service');
+      if (svc && group.services.some((s) => s.name === svc)) setService(svc);
+    }
+  }, [params]);
+
+  const activeGroup = getGroup(category);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +60,7 @@ export default function PostJob() {
         title,
         description,
         category: category as DbJobCategory,
+        service: service || null,
         budget_min: budgetVal,
         budget_max: budgetVal,
         is_negotiable: isNegotiable,
@@ -82,19 +93,43 @@ export default function PostJob() {
       >
         <div className="space-y-2">
           <Label className="font-bold">{t('post_job.category')}</Label>
-          <Select value={category} onValueChange={(v) => setCategory(v as DbJobCategory)}>
+          <Select
+            value={category}
+            onValueChange={(v) => {
+              setCategory(v as DbJobCategory);
+              setService('');
+            }}
+          >
             <SelectTrigger className="h-12 rounded-xl">
               <SelectValue placeholder={t('post_job.select_category')} />
             </SelectTrigger>
             <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {CATEGORY_ICONS[cat as JobCategory]} {t(`categories.${cat}`)}
+              {CATEGORY_GROUPS.map((group) => (
+                <SelectItem key={group.id} value={group.id}>
+                  {group.icon} {group.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
+
+        {activeGroup && (
+          <div className="space-y-2">
+            <Label className="font-bold">Service needed</Label>
+            <Select value={service} onValueChange={setService}>
+              <SelectTrigger className="h-12 rounded-xl">
+                <SelectValue placeholder={`Choose a ${activeGroup.name.toLowerCase()} service`} />
+              </SelectTrigger>
+              <SelectContent>
+                {activeGroup.services.map((svc) => (
+                  <SelectItem key={svc.slug} value={svc.name}>
+                    {svc.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label className="font-bold">{t('post_job.job_title')}</Label>
@@ -109,11 +144,16 @@ export default function PostJob() {
         <AIJobAssistant
           title={title}
           description={description}
-          onApplyCategory={(c) => setCategory(c as DbJobCategory)}
+          onApplyCategory={(c) => {
+            const group = getGroup(c);
+            if (group) {
+              setCategory(group.id);
+              setService('');
+            }
+          }}
           onApplyBudget={(amount) => setBudget(String(amount))}
           onExplanationChange={setAiExplanation}
         />
-
 
         <div className="space-y-2">
           <Label className="font-bold">{t('post_job.budget')}</Label>
