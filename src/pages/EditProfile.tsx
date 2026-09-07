@@ -80,7 +80,6 @@ export default function EditProfile() {
           ? {
               main_category: mainCategory || null,
               services,
-              skills: services,
               experience_years: experience ? parseInt(experience) : null,
               service_radius_km: radius ? parseInt(radius) : null,
             }
