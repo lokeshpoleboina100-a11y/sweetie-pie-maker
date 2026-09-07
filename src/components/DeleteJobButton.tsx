@@ -54,7 +54,12 @@ export default function DeleteJobButton({ job, onDeleted, variant = 'icon' }: De
       }
 
       const { error } = await supabase.from('jobs').delete().eq('id', job.id).eq('customer_id', user.id);
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23503') {
+          throw new Error('This job has payment records linked to it and cannot be deleted.');
+        }
+        throw error;
+      }
 
       toast({ title: 'Job deleted', description: `“${job.title}” and its bids have been removed.` });
       setOpen(false);
@@ -65,6 +70,7 @@ export default function DeleteJobButton({ job, onDeleted, variant = 'icon' }: De
         description: err instanceof Error ? err.message : 'Something went wrong. Please try again.',
         variant: 'destructive',
       });
+
     } finally {
       setDeleting(false);
     }
