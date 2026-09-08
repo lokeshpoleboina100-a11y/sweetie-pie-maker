@@ -1,115 +1,214 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { IndianRupee, Smartphone, QrCode, CheckCircle2, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+  IndianRupee,
+  ShieldCheck,
+  Loader2,
+  CheckCircle2,
+  Lock,
+  RotateCcw,
+  ArrowRight,
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Tables } from '@/integrations/supabase/types';
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 type DbJob = Tables<'jobs'>;
 
-const UPI_APPS = [
-  { id: 'gpay', name: 'Google Pay', icon: '💳', color: 'bg-blue-500/10 border-blue-500/30' },
-  { id: 'phonepe', name: 'PhonePe', icon: '💜', color: 'bg-purple-500/10 border-purple-500/30' },
-  { id: 'paytm', name: 'Paytm', icon: '🔵', color: 'bg-sky-500/10 border-sky-500/30' },
-  { id: 'upi', name: 'UPI ID', icon: '🏦', color: 'bg-green-500/10 border-green-500/30' },
-];
+interface PaymentRow {
+  id: string;
+  amount: number;
+  commission: number;
+  status: string;
+  released_at: string | null;
+  refunded_at: string | null;
+  refunded_amount: number;
+  created_at: string;
+}
 
-type PaymentStep = 'summary' | 'method' | 'processing' | 'success';
+const loadRazorpay = () =>
+  new Promise<boolean>((resolve) => {
+    if (window.Razorpay) return resolve(true);
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
 
 export default function Payment() {
   const { id: jobId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+
   const [job, setJob] = useState<DbJob | null>(null);
   const [workerName, setWorkerName] = useState('Worker');
   const [loading, setLoading] = useState(true);
-  const [step, setStep] = useState<PaymentStep>('summary');
-  const [selectedApp, setSelectedApp] = useState<string | null>(null);
-  const [upiId, setUpiId] = useState('');
+  const [busy, setBusy] = useState<null | 'pay' | 'release' | 'refund'>(null);
+  const [escrowBalance, setEscrowBalance] = useState(0);
+  const [payments, setPayments] = useState<PaymentRow[]>([]);
 
-  const COMMISSION_RATE = 0.1; // 10%
+  const call = useCallback(async (payload: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke('razorpay-payments', { body: payload });
+    if (error) {
+      let message = error.message;
+      try {
+        const ctx = (error as any).context;
+        if (ctx?.json) message = (await ctx.json())?.error ?? message;
+      } catch { /* keep default message */ }
+      throw new Error(typeof message === 'string' ? message : 'Payment service error');
+    }
+    if ((data as any)?.error) throw new Error(String((data as any).error));
+    return data as any;
+  }, []);
+
+  const refresh = useCallback(async () => {
+    if (!jobId) return;
+    const { data: jobData } = await supabase.from('jobs').select('*').eq('id', jobId).maybeSingle();
+    setJob(jobData ?? null);
+    if (jobData?.accepted_worker_id) {
+      const { data: p } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', jobData.accepted_worker_id)
+        .maybeSingle();
+      if (p) setWorkerName(p.full_name);
+    }
+    try {
+      const status = await call({ action: 'status', jobId });
+      setEscrowBalance(status.escrowBalance ?? 0);
+      setPayments(status.payments ?? []);
+    } catch {
+      setEscrowBalance(jobData?.escrow_balance ?? 0);
+    }
+    setLoading(false);
+  }, [jobId, call]);
 
   useEffect(() => {
-    const fetchJob = async () => {
-      const { data: jobData } = await supabase
-        .from('jobs')
-        .select('*')
-        .eq('id', jobId!)
-        .single();
-      setJob(jobData);
+    refresh();
+  }, [refresh]);
 
-      if (jobData?.accepted_worker_id) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('user_id', jobData.accepted_worker_id)
-          .single();
-        if (profile) setWorkerName(profile.full_name);
-      }
-      setLoading(false);
-    };
-    fetchJob();
-  }, [jobId]);
+  const activePayment = payments.find((p) => p.status === 'completed' && !p.released_at);
+  const settled = payments.find((p) => p.released_at);
+  const refunded = payments.find((p) => p.status === 'refunded');
 
-  const amount = job?.budget_max || job?.budget_min || 0;
-  const commission = Math.round(amount * COMMISSION_RATE);
-  const totalAmount = amount + commission;
+  const base = activePayment?.amount ?? job?.budget_max ?? job?.budget_min ?? 0;
+  const commission = activePayment?.commission ?? Math.round(base * 0.1);
+  const total = base + commission;
 
   const handlePay = async () => {
-    if (step === 'summary') {
-      setStep('method');
-      return;
-    }
+    setBusy('pay');
+    try {
+      const ok = await loadRazorpay();
+      if (!ok) throw new Error('Could not load the payment window. Check your connection.');
 
-    if (step === 'method') {
-      if (!selectedApp) {
-        toast({ title: 'Select a payment method', variant: 'destructive' });
-        return;
-      }
-      if (selectedApp === 'upi' && !upiId.includes('@')) {
-        toast({ title: 'Enter a valid UPI ID', description: 'e.g. name@upi', variant: 'destructive' });
-        return;
-      }
+      const order = await call({ action: 'create-order', jobId });
 
-      setStep('processing');
-
-      // Simulate UPI processing
-      await new Promise((r) => setTimeout(r, 2500));
-
-      const txnId = `TXN${Date.now()}`;
-
-      const { error } = await supabase.from('payments').insert({
-        job_id: jobId!,
-        customer_id: user!.id,
-        worker_id: job!.accepted_worker_id!,
-        amount,
-        commission,
-        payment_method: 'upi' as const,
-        upi_transaction_id: txnId,
-        status: 'pending' as const,
+      await new Promise<void>((resolve, reject) => {
+        const rzp = new window.Razorpay({
+          key: order.keyId,
+          order_id: order.orderId,
+          amount: order.amount,
+          currency: order.currency,
+          name: 'NearWork',
+          description: order.jobTitle,
+          prefill: { name: profile?.full_name ?? '' },
+          theme: { color: '#6366f1' },
+          handler: async (res: any) => {
+            try {
+              await call({
+                action: 'verify',
+                razorpay_order_id: res.razorpay_order_id,
+                razorpay_payment_id: res.razorpay_payment_id,
+                razorpay_signature: res.razorpay_signature,
+              });
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          modal: { ondismiss: () => reject(new Error('Payment cancelled')) },
+        });
+        rzp.open();
       });
 
-      if (error) {
-        toast({ title: 'Payment failed', description: error.message, variant: 'destructive' });
-        setStep('method');
-        return;
-      }
+      toast({
+        title: 'Payment held safely',
+        description: `₹${total.toLocaleString('en-IN')} is held for this job until you release it.`,
+      });
+      await refresh();
+    } catch (err) {
+      toast({
+        title: 'Payment not completed',
+        description: err instanceof Error ? err.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setBusy(null);
+    }
+  };
 
-      // Job is marked completed only after the payment is verified server-side
-      // (e.g. via a payment-gateway webhook that flips status to 'completed').
+  const handleRelease = async () => {
+    if (!activePayment) return;
+    setBusy('release');
+    try {
+      await call({ action: 'release', paymentId: activePayment.id });
+      toast({ title: 'Money released', description: `${workerName} has been paid.` });
+      await refresh();
+    } catch (err) {
+      toast({
+        title: 'Could not release',
+        description: err instanceof Error ? err.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setBusy(null);
+    }
+  };
 
-
-      setStep('success');
+  const handleRefund = async () => {
+    if (!activePayment) return;
+    setBusy('refund');
+    try {
+      const res = await call({ action: 'refund', paymentId: activePayment.id });
+      toast({
+        title: 'Refund started',
+        description: `₹${Number(res.amount).toLocaleString('en-IN')} is on its way back to you.`,
+      });
+      await refresh();
+    } catch (err) {
+      toast({
+        title: 'Refund failed',
+        description: err instanceof Error ? err.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -126,138 +225,171 @@ export default function Payment() {
 
   if (!job) return <div className="p-8 text-center">Job not found</div>;
 
+  const isOwner = user?.id === job.customer_id;
+
   return (
-    <div className="min-h-screen bg-background pb-8">
+    <div className="min-h-screen bg-background pb-10">
       <AppHeader title="Payment" showBack />
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
-        <AnimatePresence mode="wait">
-          {/* STEP: SUMMARY */}
-          {step === 'summary' && (
-            <motion.div key="summary" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4">
-              <Card className="p-5">
-                <h3 className="text-sm font-semibold text-muted-foreground mb-3">Payment Summary</h3>
-                <h2 className="text-lg font-extrabold mb-1">{job.title}</h2>
-                <p className="text-sm text-muted-foreground mb-4">Worker: {workerName}</p>
-                <Separator className="my-3" />
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Service Amount</span>
-                    <span className="font-semibold">₹{amount.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Platform Fee (10%)</span>
-                    <span className="font-semibold">₹{commission.toLocaleString('en-IN')}</span>
-                  </div>
-                  <Separator className="my-2" />
-                  <div className="flex justify-between text-base">
-                    <span className="font-bold">Total</span>
-                    <span className="font-extrabold text-primary text-xl">₹{totalAmount.toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-              </Card>
+        <Card className="p-5">
+          <h3 className="text-sm font-semibold text-muted-foreground mb-3">Payment summary</h3>
+          <h2 className="text-lg font-extrabold mb-1">{job.title}</h2>
+          <p className="text-sm text-muted-foreground mb-4">Worker: {workerName}</p>
+          <Separator className="my-3" />
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Service amount</span>
+              <span className="font-semibold">₹{base.toLocaleString('en-IN')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Platform fee (10%)</span>
+              <span className="font-semibold">₹{commission.toLocaleString('en-IN')}</span>
+            </div>
+            <Separator className="my-2" />
+            <div className="flex justify-between text-base">
+              <span className="font-bold">Total</span>
+              <span className="font-extrabold text-primary text-xl">
+                ₹{total.toLocaleString('en-IN')}
+              </span>
+            </div>
+          </div>
+        </Card>
 
-              <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
-                <ShieldCheck className="h-4 w-4 text-green-500" />
-                <span>Secure payment powered by UPI. Your money is safe.</span>
+        {escrowBalance > 0 && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <Card className="p-5 border-primary/30 bg-primary/5">
+              <div className="flex items-center gap-2 mb-1">
+                <Lock className="h-4 w-4 text-primary" />
+                <h3 className="font-bold">Held safely for this job</h3>
               </div>
+              <p className="text-2xl font-extrabold text-primary">
+                ₹{escrowBalance.toLocaleString('en-IN')}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {workerName} gets paid only when you release it. Not happy? Ask for a refund.
+              </p>
+            </Card>
+          </motion.div>
+        )}
 
-              <Button className="w-full h-12 rounded-xl font-bold text-base gap-2" onClick={handlePay}>
-                Proceed to Pay <ArrowRight className="h-5 w-5" />
-              </Button>
-            </motion.div>
-          )}
+        {settled && (
+          <Card className="p-5 flex items-center gap-3">
+            <CheckCircle2 className="h-8 w-8 text-green-500" />
+            <div>
+              <p className="font-bold">Paid to {workerName}</p>
+              <p className="text-xs text-muted-foreground">
+                Released on {new Date(settled.released_at!).toLocaleDateString('en-IN')}
+              </p>
+            </div>
+          </Card>
+        )}
 
-          {/* STEP: METHOD */}
-          {step === 'method' && (
-            <motion.div key="method" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-              <Card className="p-5">
-                <h3 className="text-sm font-semibold text-muted-foreground mb-1">Pay</h3>
-                <p className="text-2xl font-extrabold text-primary mb-4">₹{totalAmount.toLocaleString('en-IN')}</p>
+        {refunded && (
+          <Card className="p-5 flex items-center gap-3">
+            <RotateCcw className="h-8 w-8 text-amber-500" />
+            <div>
+              <p className="font-bold">Refunded</p>
+              <p className="text-xs text-muted-foreground">
+                ₹{refunded.refunded_amount.toLocaleString('en-IN')} returned to your account.
+                Bank refunds take 5–7 working days.
+              </p>
+            </div>
+          </Card>
+        )}
 
-                <h4 className="text-sm font-bold mb-3">Choose UPI App</h4>
-                <div className="grid grid-cols-2 gap-3">
-                  {UPI_APPS.map((app) => (
-                    <button
-                      key={app.id}
-                      onClick={() => setSelectedApp(app.id)}
-                      className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
-                        selectedApp === app.id
-                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                          : `${app.color} hover:border-primary/50`
-                      }`}
-                    >
-                      <span className="text-2xl">{app.icon}</span>
-                      <span className="font-semibold text-sm">{app.name}</span>
-                    </button>
-                  ))}
-                </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
+          <ShieldCheck className="h-4 w-4 text-green-500" />
+          <span>Secure payment by Razorpay — UPI, cards, net banking and wallets.</span>
+        </div>
 
-                {selectedApp === 'upi' && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4">
-                    <Label htmlFor="upi-id" className="text-sm font-semibold">UPI ID</Label>
-                    <Input
-                      id="upi-id"
-                      placeholder="yourname@upi"
-                      value={upiId}
-                      onChange={(e) => setUpiId(e.target.value)}
-                      className="mt-1.5 rounded-xl"
-                    />
-                  </motion.div>
-                )}
-              </Card>
+        {isOwner && !activePayment && !settled && !refunded && (
+          <Button
+            className="w-full h-12 rounded-xl font-bold text-base gap-2"
+            onClick={handlePay}
+            disabled={busy !== null || total <= 0}
+          >
+            {busy === 'pay' ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <IndianRupee className="h-5 w-5" />
+            )}
+            {busy === 'pay' ? 'Opening payment…' : `Pay ₹${total.toLocaleString('en-IN')} securely`}
+          </Button>
+        )}
 
-              <Button className="w-full h-12 rounded-xl font-bold text-base gap-2" onClick={handlePay}>
-                <IndianRupee className="h-5 w-5" /> Pay ₹{totalAmount.toLocaleString('en-IN')}
-              </Button>
-            </motion.div>
-          )}
-
-          {/* STEP: PROCESSING */}
-          {step === 'processing' && (
-            <motion.div key="processing" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-20 space-y-6">
-              <div className="relative">
-                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Smartphone className="h-10 w-10 text-primary animate-pulse" />
-                </div>
-                <div className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-primary flex items-center justify-center">
-                  <Loader2 className="h-4 w-4 animate-spin text-primary-foreground" />
-                </div>
-              </div>
-              <div className="text-center">
-                <h3 className="text-lg font-bold mb-1">Processing Payment</h3>
-                <p className="text-sm text-muted-foreground">Complete the payment in your UPI app...</p>
-              </div>
-            </motion.div>
-          )}
-
-          {/* STEP: SUCCESS */}
-          {step === 'success' && (
-            <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-16 space-y-6">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
-                className="h-24 w-24 rounded-full bg-green-500/10 flex items-center justify-center"
-              >
-                <CheckCircle2 className="h-14 w-14 text-green-500" />
-              </motion.div>
-              <div className="text-center">
-                <h3 className="text-xl font-extrabold mb-1">Payment Successful!</h3>
-                <p className="text-sm text-muted-foreground mb-1">₹{totalAmount.toLocaleString('en-IN')} paid to {workerName}</p>
-                <Badge variant="secondary" className="mt-2">Job Completed ✓</Badge>
-              </div>
-              <div className="w-full space-y-3 pt-4">
-                <Button className="w-full h-12 rounded-xl font-bold" onClick={() => navigate(`/customer/chat/${jobId}`)}>
-                  Leave a Review
+        {isOwner && activePayment && (
+          <div className="space-y-3">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button className="w-full h-12 rounded-xl font-bold gap-2" disabled={busy !== null}>
+                  {busy === 'release' ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <ArrowRight className="h-5 w-5" />
+                  )}
+                  Release ₹{activePayment.amount.toLocaleString('en-IN')} to {workerName}
                 </Button>
-                <Button variant="outline" className="w-full h-12 rounded-xl font-bold" onClick={() => navigate('/customer')}>
-                  Back to Home
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Release the money?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Only release once the work is finished. After this you cannot ask for a refund.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Not yet</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleRelease}>Release money</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full h-12 rounded-xl font-bold gap-2"
+                  disabled={busy !== null}
+                >
+                  {busy === 'refund' ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <RotateCcw className="h-5 w-5" />
+                  )}
+                  Request a refund
                 </Button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Refund this payment?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    The full amount goes back to the account you paid from. This cancels the job.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep it held</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleRefund}>Refund me</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
+
+        {!isOwner && (
+          <Card className="p-4 text-sm text-muted-foreground">
+            <Badge variant="secondary" className="mb-2">Worker view</Badge>
+            <p>
+              {escrowBalance > 0
+                ? `₹${escrowBalance.toLocaleString('en-IN')} is held for this job and will reach you when the customer confirms the work.`
+                : 'No money is held for this job yet.'}
+            </p>
+          </Card>
+        )}
+
+        <Button variant="ghost" className="w-full" onClick={() => navigate('/customer')}>
+          Back to home
+        </Button>
       </div>
     </div>
   );
