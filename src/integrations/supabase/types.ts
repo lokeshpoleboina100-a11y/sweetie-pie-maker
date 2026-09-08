@@ -433,6 +433,12 @@ export type Database = {
           id: string
           job_id: string
           payment_method: Database["public"]["Enums"]["payment_method"]
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          razorpay_refund_id: string | null
+          refunded_amount: number
+          refunded_at: string | null
+          released_at: string | null
           status: Database["public"]["Enums"]["payment_status"]
           updated_at: string
           upi_transaction_id: string | null
@@ -446,6 +452,12 @@ export type Database = {
           id?: string
           job_id: string
           payment_method?: Database["public"]["Enums"]["payment_method"]
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_refund_id?: string | null
+          refunded_amount?: number
+          refunded_at?: string | null
+          released_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           updated_at?: string
           upi_transaction_id?: string | null
@@ -459,6 +471,12 @@ export type Database = {
           id?: string
           job_id?: string
           payment_method?: Database["public"]["Enums"]["payment_method"]
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_refund_id?: string | null
+          refunded_amount?: number
+          refunded_at?: string | null
+          released_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           updated_at?: string
           upi_transaction_id?: string | null
@@ -836,7 +854,7 @@ export type Database = {
         | "submitted"
         | "approved"
         | "released"
-      payment_method: "upi" | "cash" | "wallet"
+      payment_method: "upi" | "cash" | "wallet" | "razorpay"
       payment_status: "pending" | "completed" | "failed" | "refunded"
       user_role: "customer" | "worker"
     }
@@ -1011,7 +1029,7 @@ export const Constants = {
         "approved",
         "released",
       ],
-      payment_method: ["upi", "cash", "wallet"],
+      payment_method: ["upi", "cash", "wallet", "razorpay"],
       payment_status: ["pending", "completed", "failed", "refunded"],
       user_role: ["customer", "worker"],
     },

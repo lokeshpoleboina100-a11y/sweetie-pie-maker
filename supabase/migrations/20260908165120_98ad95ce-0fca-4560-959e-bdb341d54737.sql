@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.prevent_paid_job_delete() FROM anon, authenticated;
