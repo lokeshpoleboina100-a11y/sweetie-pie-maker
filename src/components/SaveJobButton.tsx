@@ -53,13 +53,13 @@ export default function SaveJobButton({ jobId, className }: { jobId: string; cla
     <Button
       variant="ghost"
       size="icon"
-      className={cn('h-8 w-8', className)}
+      className={cn('h-8 w-8 rounded-md border border-transparent text-job-card-accent hover:border-job-card-accent/35 hover:bg-job-card-accent/10 hover:text-job-card-accent', className)}
       onClick={toggle}
       disabled={loading}
       aria-label={saved ? 'Unsave job' : 'Save job'}
     >
       {saved ? (
-        <BookmarkCheck className="h-4 w-4 text-primary fill-primary" />
+        <BookmarkCheck className="h-4 w-4 fill-job-card-accent text-job-card-accent" />
       ) : (
         <Bookmark className="h-4 w-4" />
       )}

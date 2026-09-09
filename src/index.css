@@ -51,6 +51,13 @@
     --warning-foreground: 0 0% 100%;
     --info: 210 92% 45%;
     --info-foreground: 0 0% 100%;
+
+    --job-card: 240 7% 10%;
+    --job-card-foreground: 0 0% 100%;
+    --job-card-muted: 240 6% 72%;
+    --job-card-border: 265 45% 28%;
+    --job-card-accent: 263 84% 64%;
+    --job-card-accent-foreground: 0 0% 100%;
   }
 
   .dark {
@@ -73,6 +80,12 @@
     --border: 225 14% 18%;
     --input: 225 14% 18%;
     --ring: 230 84% 60%;
+    --job-card: 240 7% 10%;
+    --job-card-foreground: 0 0% 100%;
+    --job-card-muted: 240 6% 72%;
+    --job-card-border: 265 45% 28%;
+    --job-card-accent: 263 84% 64%;
+    --job-card-accent-foreground: 0 0% 100%;
   }
 }
 

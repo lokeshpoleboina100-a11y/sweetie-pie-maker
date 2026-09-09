@@ -85,7 +85,7 @@ export default function DeleteJobButton({ job, onDeleted, variant = 'icon' }: De
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+        className="h-8 w-8 rounded-md border border-transparent text-job-card-accent hover:border-job-card-accent/35 hover:bg-job-card-accent/10 hover:text-job-card-accent"
         aria-label={`Delete job ${job.title}`}
         disabled={blocked}
       >
