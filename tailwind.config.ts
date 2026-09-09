@@ -47,6 +47,14 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        "job-card": {
+          DEFAULT: "hsl(var(--job-card))",
+          foreground: "hsl(var(--job-card-foreground))",
+          muted: "hsl(var(--job-card-muted))",
+          border: "hsl(var(--job-card-border))",
+          accent: "hsl(var(--job-card-accent))",
+          "accent-foreground": "hsl(var(--job-card-accent-foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -62,6 +70,12 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        "job-card": "0 14px 34px -24px hsl(var(--job-card-accent) / 0.4), inset 0 1px 0 hsl(var(--job-card-foreground) / 0.035)",
+        "job-card-hover": "0 18px 42px -22px hsl(var(--job-card-accent) / 0.52), inset 0 1px 0 hsl(var(--job-card-foreground) / 0.05)",
+        "job-card-icon": "0 0 18px hsl(var(--job-card-accent) / 0.14)",
+        "job-card-button": "0 8px 20px -10px hsl(var(--job-card-accent) / 0.85)",
       },
       keyframes: {
         "accordion-down": {
