@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Camera } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LocationPicker from '@/components/LocationPicker';
 import AppHeader from '@/components/AppHeader';
+import AIProblemDetection from '@/components/AIProblemDetection';
 import AIJobAssistant, { type AiExplanation } from '@/components/AIJobAssistant';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -178,13 +179,13 @@ export default function PostJob() {
           />
         </div>
 
-        <div className="space-y-2">
-          <Label className="font-bold">{t('post_job.photos')}</Label>
-          <Button type="button" variant="outline" className="w-full h-24 rounded-xl border-dashed gap-2 flex-col">
-            <Camera className="h-6 w-6 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">{t('post_job.add_photos')}</span>
-          </Button>
-        </div>
+        <AIProblemDetection
+          hint={[title, description].filter(Boolean).join(' — ')}
+          onUseResult={(line) =>
+            setDescription((prev) => (prev.includes(line) ? prev : [prev.trim(), line].filter(Boolean).join('\n\n')))
+          }
+        />
+
 
         <div className="flex items-center justify-between p-4 rounded-2xl bg-accent/10 border border-accent/20">
           <div>
