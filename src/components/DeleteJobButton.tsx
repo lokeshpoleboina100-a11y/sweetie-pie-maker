@@ -43,22 +43,34 @@ export default function DeleteJobButton({ job, onDeleted, variant = 'icon' }: De
     setDeleting(true);
     try {
       // Guard against paid jobs even if the status was not updated.
-      const { data: paid } = await supabase
+      const { data: paid, error: paymentCheckError } = await supabase
         .from('payments')
         .select('id')
         .eq('job_id', job.id)
-        .eq('status', 'completed')
+        .in('status', ['completed', 'refunded'])
         .limit(1);
+      if (paymentCheckError) {
+        throw new Error('Could not verify this job’s payment status. Please try again.');
+      }
       if (paid && paid.length > 0) {
-        throw new Error('This job already has a completed payment and cannot be deleted.');
+        throw new Error('This job has a completed or refunded payment and cannot be deleted.');
       }
 
-      const { error } = await supabase.from('jobs').delete().eq('id', job.id).eq('customer_id', user.id);
+      const { data: deletedJob, error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', job.id)
+        .eq('customer_id', user.id)
+        .select('id')
+        .maybeSingle();
       if (error) {
         if (error.code === '23503') {
           throw new Error('This job has payment records linked to it and cannot be deleted.');
         }
         throw error;
+      }
+      if (!deletedJob) {
+        throw new Error('This job was not deleted. It may already be removed or you may no longer have permission.');
       }
 
       toast({ title: 'Job deleted', description: `“${job.title}” and its bids have been removed.` });
