@@ -59,6 +59,14 @@ export default function WorkerJobDetails() {
     e.preventDefault();
     if (!user || !job) return;
 
+    const validationError = validateBidAmount(bidAmount);
+    if (validationError) {
+      setAmountError(validationError);
+      toast({ title: 'Invalid bid amount', description: validationError, variant: 'destructive' });
+      return;
+    }
+    setAmountError(null);
+
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from('bids').insert({
