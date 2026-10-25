@@ -19,6 +19,19 @@ import AIProposalGenerator from '@/components/AIProposalGenerator';
 
 type DbJob = Tables<'jobs'>;
 
+const MAX_BID_AMOUNT = 10_000_000;
+
+export function validateBidAmount(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return 'Please enter your bid amount.';
+  const value = Number(trimmed);
+  if (!Number.isFinite(value)) return 'Bid amount must be a number — digits only.';
+  if (!Number.isInteger(value)) return 'Bid amount must be a whole number in rupees (no decimals).';
+  if (value < 1) return 'Bid amount must be at least ₹1.';
+  if (value > MAX_BID_AMOUNT) return 'Bid amount cannot exceed ₹1,00,00,000.';
+  return null;
+}
+
 export default function WorkerJobDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -28,6 +41,7 @@ export default function WorkerJobDetails() {
   const [loading, setLoading] = useState(true);
   const [showBidForm, setShowBidForm] = useState(false);
   const [bidAmount, setBidAmount] = useState('');
+  const [amountError, setAmountError] = useState<string | null>(null);
   const [timeEstimate, setTimeEstimate] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,12 +59,20 @@ export default function WorkerJobDetails() {
     e.preventDefault();
     if (!user || !job) return;
 
+    const validationError = validateBidAmount(bidAmount);
+    if (validationError) {
+      setAmountError(validationError);
+      toast({ title: 'Invalid bid amount', description: validationError, variant: 'destructive' });
+      return;
+    }
+    setAmountError(null);
+
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from('bids').insert({
         job_id: job.id,
         worker_id: user.id,
-        amount: parseInt(bidAmount),
+        amount: Number(bidAmount),
         estimated_time: timeEstimate,
         message,
       });
@@ -58,7 +80,13 @@ export default function WorkerJobDetails() {
       toast({ title: 'Bid submitted!', description: 'The customer will review your bid.' });
       navigate('/worker');
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      const msg: string = err?.message ?? 'Something went wrong. Please try again.';
+      const isAmountError = /bid amount/i.test(msg);
+      toast({
+        title: isAmountError ? 'Invalid bid amount' : 'Error',
+        description: msg,
+        variant: 'destructive',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -151,7 +179,24 @@ export default function WorkerJobDetails() {
               <h3 className="font-bold">Your Bid</h3>
               <div className="space-y-2">
                 <Label className="font-bold">Your Price (₹)</Label>
-                <Input type="number" placeholder={String(budget)} className="h-12 rounded-xl" required value={bidAmount} onChange={(e) => setBidAmount(e.target.value)} />
+                <Input
+                  type="number"
+                  min={1}
+                  inputMode="numeric"
+                  placeholder={String(budget)}
+                  className="h-12 rounded-xl"
+                  required
+                  aria-invalid={!!amountError}
+                  value={bidAmount}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setBidAmount(v);
+                    setAmountError(v.trim() ? validateBidAmount(v) : null);
+                  }}
+                />
+                {amountError && (
+                  <p className="text-sm font-semibold text-destructive" role="alert">{amountError}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label className="font-bold">Time Estimate</Label>
