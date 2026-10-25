@@ -19,6 +19,19 @@ import AIProposalGenerator from '@/components/AIProposalGenerator';
 
 type DbJob = Tables<'jobs'>;
 
+const MAX_BID_AMOUNT = 10_000_000;
+
+export function validateBidAmount(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return 'Please enter your bid amount.';
+  const value = Number(trimmed);
+  if (!Number.isFinite(value)) return 'Bid amount must be a number — digits only.';
+  if (!Number.isInteger(value)) return 'Bid amount must be a whole number in rupees (no decimals).';
+  if (value < 1) return 'Bid amount must be at least ₹1.';
+  if (value > MAX_BID_AMOUNT) return 'Bid amount cannot exceed ₹1,00,00,000.';
+  return null;
+}
+
 export default function WorkerJobDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
