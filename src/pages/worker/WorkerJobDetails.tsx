@@ -41,6 +41,7 @@ export default function WorkerJobDetails() {
   const [loading, setLoading] = useState(true);
   const [showBidForm, setShowBidForm] = useState(false);
   const [bidAmount, setBidAmount] = useState('');
+  const [amountError, setAmountError] = useState<string | null>(null);
   const [timeEstimate, setTimeEstimate] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
