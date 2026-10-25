@@ -49,10 +49,12 @@ BEGIN
   END IF;
   RAISE NOTICE 'TEST 3 PASSED: over-maximum amount rejected';
 
-  -- 4. Valid amount is accepted.
+  -- 4. Valid amount is accepted. Clear this worker's existing bids on the job
+  -- first so the unique (job_id, worker_id) constraint does not interfere.
   BEGIN
+    DELETE FROM public.bids WHERE job_id = v_job AND worker_id = v_worker;
     INSERT INTO public.bids (job_id, worker_id, amount) VALUES (v_job, v_worker, 1500);
-    IF NOT FOUND OR NOT EXISTS (SELECT 1 FROM public.bids WHERE job_id = v_job AND worker_id = v_worker AND amount = 1500) THEN
+    IF NOT EXISTS (SELECT 1 FROM public.bids WHERE job_id = v_job AND worker_id = v_worker AND amount = 1500) THEN
       RAISE EXCEPTION 'TEST 4 FAILED: valid bid amount not inserted';
     END IF;
   EXCEPTION WHEN OTHERS THEN
