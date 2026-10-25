@@ -179,7 +179,24 @@ export default function WorkerJobDetails() {
               <h3 className="font-bold">Your Bid</h3>
               <div className="space-y-2">
                 <Label className="font-bold">Your Price (₹)</Label>
-                <Input type="number" placeholder={String(budget)} className="h-12 rounded-xl" required value={bidAmount} onChange={(e) => setBidAmount(e.target.value)} />
+                <Input
+                  type="number"
+                  min={1}
+                  inputMode="numeric"
+                  placeholder={String(budget)}
+                  className="h-12 rounded-xl"
+                  required
+                  aria-invalid={!!amountError}
+                  value={bidAmount}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setBidAmount(v);
+                    setAmountError(v.trim() ? validateBidAmount(v) : null);
+                  }}
+                />
+                {amountError && (
+                  <p className="text-sm font-semibold text-destructive" role="alert">{amountError}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label className="font-bold">Time Estimate</Label>
