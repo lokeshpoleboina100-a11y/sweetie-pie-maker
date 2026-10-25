@@ -10,9 +10,19 @@ DECLARE
   v_worker uuid;
   v_err text;
 BEGIN
-  SELECT job_id, worker_id INTO v_job, v_worker FROM public.bids LIMIT 1;
+  -- Pick a job the test worker has not bid on yet, so the unique
+  -- (job_id, worker_id) constraint does not interfere with the valid insert.
+  SELECT j.id, b1.worker_id INTO v_job, v_worker
+  FROM public.bids b1
+  CROSS JOIN public.jobs j
+  WHERE j.id <> b1.job_id
+    AND NOT EXISTS (
+      SELECT 1 FROM public.bids b
+      WHERE b.job_id = j.id AND b.worker_id = b1.worker_id
+    )
+  LIMIT 1;
   IF v_job IS NULL THEN
-    RAISE NOTICE 'TEST SKIPPED: no bids present to derive job/worker ids';
+    RAISE NOTICE 'TEST SKIPPED: no eligible job/worker pair found';
     RETURN;
   END IF;
 
