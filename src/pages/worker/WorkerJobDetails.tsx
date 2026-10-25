@@ -72,7 +72,7 @@ export default function WorkerJobDetails() {
       const { error } = await supabase.from('bids').insert({
         job_id: job.id,
         worker_id: user.id,
-        amount: parseInt(bidAmount),
+        amount: Number(bidAmount),
         estimated_time: timeEstimate,
         message,
       });
@@ -80,7 +80,13 @@ export default function WorkerJobDetails() {
       toast({ title: 'Bid submitted!', description: 'The customer will review your bid.' });
       navigate('/worker');
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      const msg: string = err?.message ?? 'Something went wrong. Please try again.';
+      const isAmountError = /bid amount/i.test(msg);
+      toast({
+        title: isAmountError ? 'Invalid bid amount' : 'Error',
+        description: msg,
+        variant: 'destructive',
+      });
     } finally {
       setIsSubmitting(false);
     }
