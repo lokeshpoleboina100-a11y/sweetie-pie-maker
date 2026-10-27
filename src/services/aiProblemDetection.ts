@@ -7,26 +7,15 @@ import { supabase } from '@/integrations/supabase/client';
  * confused with one another:
  *
  *  1. Computer vision (CNN-class image classifier) — `analyzeProblemPhoto()`.
- *     Takes a customer photo and classifies the visible problem. It does NOT
- *     create images. Swapping in a self-hosted/trained CNN only requires
- *     changing the backing endpoint; this signature stays stable.
+ *     Takes a customer photo, classifies the visible problem, and generates
+ *     job details (category, title, description). It does NOT create images.
+ *     Swapping in a self-hosted/trained CNN only requires changing the backing
+ *     endpoint; this signature stays stable.
  *
  *  2. Generative image model — `generateReferenceViews()`. Produces clearly
  *     labelled AI reference illustrations for problem areas that cannot be
  *     photographed. These are never real photographs.
  */
-
-export const PROBLEM_CATEGORIES = [
-  'Plumbing',
-  'Electrical',
-  'AC / Cooling',
-  'Appliance',
-  'Wall / Structural',
-  'Water Leakage',
-  'Other',
-] as const;
-
-export type ProblemCategory = (typeof PROBLEM_CATEGORIES)[number];
 
 /** Normalised (0..1) box around the detected problem area, origin top-left. */
 export interface ProblemRegion {
@@ -39,10 +28,24 @@ export interface ProblemRegion {
 export interface VisionAnalysis {
   /** Identifier of the vision component that produced this result. */
   model: string;
+  /** Short human label of the detected problem. */
   problem: string;
-  category: ProblemCategory;
+  /** Display label for the detected job category (e.g. "Home Services"). */
+  category: string;
+  /** Form category id (job_category enum) the category selector can be set to. */
+  categoryId: string;
+  /** Service suggestion validated against the app catalog, or null. */
+  service: string | null;
+  /** AI-generated, editable job title. */
+  jobTitle: string;
+  /** AI-generated, editable job description. */
+  description: string;
+  detectedObject: string;
+  visibleProblem: string;
   /** 0-100 */
   confidence: number;
+  /** True when the photo does not support a confident classification. */
+  needsMoreInformation: boolean;
   explanation: string;
   /** False when the photo is too unclear for a reliable classification. */
   clear_enough: boolean;
@@ -86,7 +89,7 @@ async function callDetection<T>(body: Record<string, unknown>): Promise<T> {
   return data as T;
 }
 
-/** Computer-vision classification of the visible problem in a photo. */
+/** Computer-vision classification + job-detail generation for a photo. */
 export function analyzeProblemPhoto(input: { image: string; hint?: string }) {
   return callDetection<VisionAnalysis>({
     action: 'analyze',
@@ -111,7 +114,7 @@ export function generateReferenceViews(input: {
   });
 }
 
-/** Sentence appended to the job description when the customer accepts a result. */
+/** Sentence appended to an existing description when the customer accepts a result. */
 export function buildDescriptionLine(analysis: VisionAnalysis): string {
   return `${analysis.problem} detected by AI (${analysis.confidence}% confidence). Please inspect the affected area.`;
 }
