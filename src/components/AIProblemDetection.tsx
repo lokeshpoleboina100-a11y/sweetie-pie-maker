@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  AlertTriangle,
   BrainCircuit,
   Camera,
   CheckCircle2,
@@ -19,7 +20,6 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import {
   analyzeProblemPhoto,
-  buildDescriptionLine,
   fileToAnalysisDataUrl,
   generateReferenceViews,
   type ReferenceView,
@@ -29,8 +29,8 @@ import {
 interface Props {
   /** Extra context sent to the vision model (usually the job title/description). */
   hint?: string;
-  /** Called when the customer accepts the AI result. */
-  onUseResult: (line: string, analysis: VisionAnalysis) => void;
+  /** Applies the AI result to the form: category, title, description, photo. */
+  onApply: (analysis: VisionAnalysis, photo: string) => void;
 }
 
 const FEATURES = [
@@ -39,13 +39,14 @@ const FEATURES = [
   { icon: Images, label: 'AI Reference Views' },
 ];
 
-export default function AIProblemDetection({ hint, onUseResult }: Props) {
+export default function AIProblemDetection({ hint, onApply }: Props) {
   const { toast } = useToast();
   const galleryRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
 
   const [photo, setPhoto] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisFailed, setAnalysisFailed] = useState(false);
   const [result, setResult] = useState<VisionAnalysis | null>(null);
   const [generating, setGenerating] = useState(false);
   const [views, setViews] = useState<ReferenceView[]>([]);
@@ -55,6 +56,7 @@ export default function AIProblemDetection({ hint, onUseResult }: Props) {
     setResult(null);
     setViews([]);
     setApplied(false);
+    setAnalysisFailed(false);
   };
 
   const pick = (ref: React.RefObject<HTMLInputElement>) => {
@@ -74,6 +76,7 @@ export default function AIProblemDetection({ hint, onUseResult }: Props) {
       const dataUrl = await fileToAnalysisDataUrl(file);
       reset();
       setPhoto(dataUrl);
+      setAnalysisFailed(false);
     } catch (e) {
       toast({ title: 'Could not read that photo', description: (e as Error).message, variant: 'destructive' });
     }
@@ -84,11 +87,17 @@ export default function AIProblemDetection({ hint, onUseResult }: Props) {
     setAnalyzing(true);
     setViews([]);
     setApplied(false);
+    setAnalysisFailed(false);
     try {
       const analysis = await analyzeProblemPhoto({ image: photo, hint });
       setResult(analysis);
     } catch (e) {
-      toast({ title: 'AI analysis failed', description: (e as Error).message, variant: 'destructive' });
+      setAnalysisFailed(true);
+      toast({
+        title: 'AI analysis failed',
+        description: (e as Error).message || 'Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setAnalyzing(false);
     }
@@ -101,7 +110,7 @@ export default function AIProblemDetection({ hint, onUseResult }: Props) {
       const { images } = await generateReferenceViews({
         image: photo,
         problem: result?.problem ?? 'possible fault',
-        category: result?.category ?? 'Other',
+        category: result?.category ?? 'Home Services',
         views: 3,
       });
       setViews(images);
@@ -112,11 +121,11 @@ export default function AIProblemDetection({ hint, onUseResult }: Props) {
     }
   };
 
-  const useResult = () => {
-    if (!result) return;
-    onUseResult(buildDescriptionLine(result), result);
+  const applyResult = () => {
+    if (!result || !photo) return;
+    onApply(result, photo);
     setApplied(true);
-    toast({ title: 'Added to your job description' });
+    toast({ title: 'Job details generated successfully.' });
   };
 
   return (
@@ -144,7 +153,7 @@ export default function AIProblemDetection({ hint, onUseResult }: Props) {
             AI Problem Detection
           </Label>
           <p className="text-xs text-muted-foreground mt-1">
-            Show the problem. AI helps you understand it.
+            Show the problem. AI fills in the category, title and description for you.
           </p>
         </div>
         <Badge variant="outline" className="shrink-0 border-primary/30 text-primary bg-primary/5">
@@ -173,7 +182,7 @@ export default function AIProblemDetection({ hint, onUseResult }: Props) {
           <p className="font-bold text-sm">Upload Problem Photo</p>
           <p className="text-xs text-muted-foreground mt-1">Take a Photo or Upload from Gallery</p>
           <p className="text-xs text-muted-foreground/80 mt-2 max-w-xs mx-auto">
-            Upload a photo and AI will analyze the visible problem.
+            Upload a photo and AI will analyze the visible problem and write the job details.
           </p>
           <div className="mt-4 flex flex-col sm:flex-row gap-2 justify-center">
             <Button type="button" className="rounded-xl gap-2" onClick={() => pick(cameraRef)}>
@@ -218,7 +227,7 @@ export default function AIProblemDetection({ hint, onUseResult }: Props) {
                   className="absolute left-0 h-0.5 w-full bg-primary/70"
                 />
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <p className="text-sm font-semibold">Analyzing with CNN…</p>
+                <p className="text-sm font-semibold">AI is analyzing your problem...</p>
                 <p className="text-xs text-muted-foreground">Detecting possible problem areas…</p>
               </div>
             )}
@@ -228,7 +237,7 @@ export default function AIProblemDetection({ hint, onUseResult }: Props) {
             {!result && (
               <Button type="button" className="rounded-xl gap-2 flex-1" onClick={runAnalysis} disabled={analyzing}>
                 {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <BrainCircuit className="h-4 w-4" />}
-                {analyzing ? 'Analyzing…' : 'Analyze with AI'}
+                {analyzing ? 'Analyzing…' : analysisFailed ? 'Retry analysis' : 'Analyze with AI'}
               </Button>
             )}
             <Button
@@ -275,6 +284,16 @@ export default function AIProblemDetection({ hint, onUseResult }: Props) {
               </Badge>
             </div>
 
+            {(result.needsMoreInformation || result.confidence < 50) && (
+              <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-[12px] text-foreground">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
+                <span>
+                  The photo does not give enough information for a confident result. Please review and adjust the
+                  generated details before posting.
+                </span>
+              </div>
+            )}
+
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Confidence</span>
@@ -292,14 +311,34 @@ export default function AIProblemDetection({ hint, onUseResult }: Props) {
 
             <p className="text-sm text-muted-foreground">{result.explanation}</p>
 
+            <div className="rounded-xl border border-border/70 bg-card p-3 space-y-1.5">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Suggested job title</p>
+              <p className="text-sm font-semibold">{result.jobTitle}</p>
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground pt-1">Suggested description</p>
+              <p className="text-sm text-muted-foreground">{result.description}</p>
+            </div>
+
             <Button
               type="button"
               className="w-full rounded-xl gap-2"
-              onClick={useResult}
+              onClick={applyResult}
               variant={applied ? 'outline' : 'default'}
             >
               <CheckCircle2 className="h-4 w-4" />
-              {applied ? 'Added to description' : 'Use AI Result'}
+              {applied ? 'Added to the form — editable above' : 'Use AI Result'}
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full rounded-xl gap-2 text-muted-foreground"
+              onClick={() => {
+                reset();
+                runAnalysis();
+              }}
+              disabled={analyzing}
+            >
+              <RefreshCw className="h-4 w-4" /> Analyze another photo
             </Button>
 
             <p className="text-[11px] text-muted-foreground/90">
