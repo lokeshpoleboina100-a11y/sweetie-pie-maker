@@ -114,13 +114,22 @@ async function runVisionAnalysis(imageDataUrl: string, hint?: string) {
       {
         role: "system",
         content:
-          "You are a home-services computer-vision inspector for NearWork. " +
-          "Look only at what is visible in the photo. Classify the most likely " +
-          "physical problem, give a calibrated confidence (0-1), a one-sentence " +
-          "plain-English explanation a non-technical customer understands, and a " +
-          "normalised bounding box (0-1, origin top-left) around the problem area. " +
-          "If the photo is too unclear to judge, say so, set clear_enough to false " +
-          "and keep confidence low.",
+          "You are a home-services computer-vision inspector for NearWork, a job marketplace. " +
+          "Look only at what is visible in the photo and: " +
+          "1) identify the main object or appliance, 2) describe the visible damage or suspected problem, " +
+          "3) pick the single best job category for hiring someone to fix it, 4) suggest one matching service " +
+          "from the allowed services of that category, 5) write a short imperative job title (max 8 words, " +
+          "e.g. 'Repair Leaking Kitchen Pipe', 'AC Inspection and Repair'), and 6) write a detailed job " +
+          "description of 2-4 sentences covering the identified object, the visible damage or suspected " +
+          "problem, the service required, and what information the customer should confirm with the " +
+          "professional. Never claim an internal fault is definitively identified from an image alone — " +
+          "distinguish visible observations from suspected causes. Give a calibrated confidence (0-1), a " +
+          "one-sentence plain-English explanation a non-technical customer understands, and a normalised " +
+          "bounding box (0-1, origin top-left) around the problem area. If the photo is unclear or shows " +
+          "something unrelated to a bookable service, set needs_more_information true and keep confidence low " +
+          "while still giving your best-guess category. " +
+          "Allowed category ids and their services: " +
+          JOB_CATEGORY_IDS.map((id) => `${id} (${SERVICES_BY_CATEGORY[id].join(", ")})`).join("; "),
       },
       {
         role: "user",
@@ -129,7 +138,7 @@ async function runVisionAnalysis(imageDataUrl: string, hint?: string) {
             type: "text",
             text: hint
               ? `Job context from the customer: ${hint}`.slice(0, 500)
-              : "Identify the visible problem.",
+              : "Analyze this photo and generate the job details.",
           },
           { type: "image_url", image_url: { url: imageDataUrl } },
         ],
@@ -144,17 +153,29 @@ async function runVisionAnalysis(imageDataUrl: string, hint?: string) {
           type: "object",
           additionalProperties: false,
           required: [
+            "detected_object",
+            "visible_problem",
             "problem",
-            "category",
+            "job_title",
+            "description",
+            "category_id",
+            "service",
             "confidence",
+            "needs_more_information",
             "explanation",
             "clear_enough",
             "region",
           ],
           properties: {
+            detected_object: { type: "string" },
+            visible_problem: { type: "string" },
             problem: { type: "string" },
-            category: { type: "string", enum: CATEGORIES as unknown as string[] },
+            job_title: { type: "string" },
+            description: { type: "string" },
+            category_id: { type: "string", enum: JOB_CATEGORY_IDS as unknown as string[] },
+            service: { type: "string" },
             confidence: { type: "number" },
+            needs_more_information: { type: "boolean" },
             explanation: { type: "string" },
             clear_enough: { type: "boolean" },
             region: {
@@ -183,11 +204,24 @@ async function runVisionAnalysis(imageDataUrl: string, hint?: string) {
     return Math.min(1, Math.max(0, v));
   };
 
+  const categoryId = (JOB_CATEGORY_IDS as readonly string[]).includes(parsed.category_id)
+    ? parsed.category_id
+    : "home_services";
+  const service = matchService(categoryId, parsed.service);
+  const problem = String(parsed.problem ?? "Unclear problem");
+
   return {
     model: VISION_MODEL,
-    problem: String(parsed.problem ?? "Unclear problem"),
-    category: CATEGORIES.includes(parsed.category) ? parsed.category : "Other",
+    problem,
+    category: JOB_CATEGORY_LABELS[categoryId],
+    categoryId,
+    service,
+    jobTitle: String(parsed.job_title ?? problem).slice(0, 120),
+    description: String(parsed.description ?? ""),
+    detectedObject: String(parsed.detected_object ?? ""),
+    visibleProblem: String(parsed.visible_problem ?? problem),
     confidence: Math.round(clamp01(parsed.confidence) * 100),
+    needsMoreInformation: parsed.needs_more_information === true,
     explanation: String(parsed.explanation ?? ""),
     clear_enough: parsed.clear_enough !== false,
     region: {
