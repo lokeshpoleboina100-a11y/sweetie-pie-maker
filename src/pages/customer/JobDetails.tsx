@@ -41,6 +41,7 @@ export default function JobDetails() {
   const { toast } = useToast();
   const [job, setJob] = useState<DbJob | null>(null);
   const [bids, setBids] = useState<BidWithProfile[]>([]);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -84,6 +85,26 @@ export default function JobDetails() {
     fetchData();
   }, [id]);
 
+  // Job photos live in a private bucket; resolve short-lived signed URLs.
+  useEffect(() => {
+    const images = (job?.images as string[] | null) ?? [];
+    if (images.length === 0) {
+      setPhotoUrls([]);
+      return;
+    }
+    let cancelled = false;
+    Promise.all(
+      images.map((path) =>
+        supabase.storage.from('job-photos').createSignedUrl(path, 60 * 60 * 24).then((r) => r.data?.signedUrl ?? null),
+      ),
+    ).then((urls) => {
+      if (!cancelled) setPhotoUrls(urls.filter((u): u is string => Boolean(u)));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [job?.id, job?.images]);
+
   const handleAccept = async (bid: BidWithProfile) => {
     await supabase
       .from('jobs')
@@ -126,9 +147,9 @@ export default function JobDetails() {
           </div>
           <h2 className="text-xl font-extrabold mb-1">{job.title}</h2>
           <p className="text-sm text-muted-foreground mb-3">{job.description}</p>
-          {job.images && job.images.length > 0 && (
+          {photoUrls.length > 0 && (
             <div className="grid grid-cols-2 gap-2 mb-3">
-              {job.images.map((url, i) => (
+              {photoUrls.map((url, i) => (
                 <img
                   key={i}
                   src={url}
