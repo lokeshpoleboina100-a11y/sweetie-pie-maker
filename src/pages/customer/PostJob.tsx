@@ -61,8 +61,7 @@ export default function PostJob() {
         .from('job-photos')
         .upload(path, blob, { contentType: 'image/jpeg' });
       if (error) throw error;
-      const { data } = supabase.storage.from('job-photos').getPublicUrl(path);
-      return [data.publicUrl];
+      return [path];
     } catch (err) {
       console.error('Problem photo upload failed:', err);
       toast({ title: 'Photo could not be attached', description: 'Your job was posted without the photo.' });
