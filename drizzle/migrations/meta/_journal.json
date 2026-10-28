@@ -8,6 +8,13 @@
       "when": 1792898154184,
       "tag": "0000_bid_amount_validation",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793149447748,
+      "tag": "0001_job_photo_policies",
+      "breakpoints": true
     }
   ]
 }
