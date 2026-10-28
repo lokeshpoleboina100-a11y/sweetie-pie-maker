@@ -126,6 +126,18 @@ export default function JobDetails() {
           </div>
           <h2 className="text-xl font-extrabold mb-1">{job.title}</h2>
           <p className="text-sm text-muted-foreground mb-3">{job.description}</p>
+          {job.images && job.images.length > 0 && (
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {job.images.map((url, i) => (
+                <img
+                  key={i}
+                  src={url}
+                  alt={`Job photo ${i + 1}`}
+                  className="rounded-xl border border-border/70 w-full aspect-square object-cover"
+                />
+              ))}
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <span className="text-2xl font-extrabold text-primary">₹{budget.toLocaleString('en-IN')}</span>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
