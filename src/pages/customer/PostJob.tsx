@@ -36,6 +36,7 @@ export default function PostJob() {
   const [jobLat, setJobLat] = useState<number>(13.0827);
   const [jobLng, setJobLng] = useState<number>(80.2707);
   const [aiExplanation, setAiExplanation] = useState<AiExplanation | null>(null);
+  const [problemImage, setProblemImage] = useState<string | null>(null);
 
   // Pre-fill from the category / service the customer picked before landing here.
   useEffect(() => {
@@ -49,12 +50,33 @@ export default function PostJob() {
 
   const activeGroup = getGroup(category);
 
+  // Attaches the AI problem photo to the job. Failure never blocks the job
+  // from being posted — the job simply goes out without the photo.
+  const uploadProblemImage = async (): Promise<string[] | null> => {
+    if (!problemImage) return null;
+    try {
+      const blob = await (await fetch(problemImage)).blob();
+      const path = `${user!.id}/${Date.now()}.jpg`;
+      const { error } = await supabase.storage
+        .from('job-photos')
+        .upload(path, blob, { contentType: 'image/jpeg' });
+      if (error) throw error;
+      const { data } = supabase.storage.from('job-photos').getPublicUrl(path);
+      return [data.publicUrl];
+    } catch (err) {
+      console.error('Problem photo upload failed:', err);
+      toast({ title: 'Photo could not be attached', description: 'Your job was posted without the photo.' });
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !category) return;
 
     setIsSubmitting(true);
     try {
+      const images = await uploadProblemImage();
       const budgetVal = parseInt(budget) || 0;
       const { error } = await supabase.from('jobs').insert({
         customer_id: user.id,
@@ -69,6 +91,7 @@ export default function PostJob() {
         location_name: locationName || 'Not set',
         latitude: jobLat,
         longitude: jobLng,
+        images: images ?? null,
         ai_explanation: (aiExplanation as any) ?? null,
       });
 
@@ -181,9 +204,19 @@ export default function PostJob() {
 
         <AIProblemDetection
           hint={[title, description].filter(Boolean).join(' — ')}
-          onUseResult={(line) =>
-            setDescription((prev) => (prev.includes(line) ? prev : [prev.trim(), line].filter(Boolean).join('\n\n')))
-          }
+          onApply={(analysis, photo) => {
+            setProblemImage(photo);
+            if (analysis.categoryId) {
+              setCategory(analysis.categoryId as DbJobCategory);
+              setService(analysis.service ?? '');
+            }
+            if (analysis.jobTitle) setTitle(analysis.jobTitle);
+            setDescription((prev) => {
+              const t = prev.trim();
+              if (!t) return analysis.description;
+              return t.includes(analysis.description) ? t : `${t}\n\n${analysis.description}`;
+            });
+          }}
         />
 
 
