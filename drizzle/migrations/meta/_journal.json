@@ -15,6 +15,13 @@
       "when": 1793149447748,
       "tag": "0001_job_photo_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795607205421,
+      "tag": "0002_scope_job_photo_reads",
+      "breakpoints": true
     }
   ]
 }
