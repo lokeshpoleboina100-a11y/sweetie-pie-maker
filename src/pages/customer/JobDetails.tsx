@@ -88,15 +88,20 @@ export default function JobDetails() {
   // Job photos live in a private bucket; resolve short-lived signed URLs.
   useEffect(() => {
     const images = (job?.images as string[] | null) ?? [];
-    if (images.length === 0) {
+    const currentJobId = job?.id;
+    if (!currentJobId || images.length === 0) {
       setPhotoUrls([]);
       return;
     }
     let cancelled = false;
     Promise.all(
-      images.map((path) =>
-        supabase.storage.from('job-photos').createSignedUrl(path, 60 * 60 * 24).then((r) => r.data?.signedUrl ?? null),
-      ),
+      images.map(async (path) => {
+        const { data, error } = await supabase.functions.invoke('job-photo-url', {
+          body: { jobId: currentJobId, path },
+        });
+        if (error || typeof data?.signedUrl !== 'string') return null;
+        return data.signedUrl;
+      }),
     ).then((urls) => {
       if (!cancelled) setPhotoUrls(urls.filter((u): u is string => Boolean(u)));
     });
